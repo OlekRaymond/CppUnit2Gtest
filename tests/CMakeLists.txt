@@ -30,7 +30,8 @@ endif()
 
 
 
-add_executable(${PROJECT_NAME} ${CppUnitFiles})
+add_executable(${PROJECT_NAME} ${CppUnitFiles}
+        examples/Hierarchy.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE GTest::GTest GTest::Main)
 
 # Create links to our main file so they can be used by cppunit style imports

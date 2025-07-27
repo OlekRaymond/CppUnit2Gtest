@@ -20,13 +20,20 @@ namespace CppUnit {
     };
 
     using TestFixture = TestCase;
+// CppUnit does some odd things in the name of portability
+//  We end up undoing a lot of them by default (ironically to maintain portability)
 // Define to avoid the CppUnit::OStream being defined (allows for user defined custom streams)
 #ifndef Cppunit2Gtest_NoDeclOStream
-#    if defined(Cppunit2Gtest_StreamType)
-    using OStream = Cppunit2Gtest_StreamType;
-#    else
-    using OStream = std::ostream;
-#    endif
+#   if defined(Cppunit2Gtest_StreamType)
+        using OStream = Cppunit2Gtest_StreamType;
+#   else
+        using OStream = std::ostream;
+#   endif
+#   if defined(Cppunit2Gtest_CustomCout)
+        inline auto stdCOut() { return Cppunit2Gtest_CustomCout; }
+#   else
+        inline auto& stdCOut() { return std::cout; }
+#   endif
 #endif
 
 namespace to { namespace gtest {
@@ -47,6 +54,14 @@ namespace to { namespace gtest {
         TestData(TestData&&) = default;
         TestData& operator=(const TestData&) = default;
         TestData& operator=(TestData&&) = default;
+        // Allow casting to another class type that inherits the current one
+        template<typename Derived>
+        explicit TestData(TestData<Derived>& from)
+            : testMethod(TestMethodType(from.testMethod))
+            , line(from.line)
+            , testName(from.testName)
+        {
+        }
     };
 
     template<typename TestSuite>
@@ -54,7 +69,7 @@ namespace to { namespace gtest {
         using TestSuite::TestSuite;
         using TestMethod = typename TestData<TestSuite>::TestMethodType;
         TestMethod testMethod;
-        DynamicTest(TestMethod testMethod_) : testMethod(testMethod_) {}
+        explicit DynamicTest(TestMethod testMethod_) : testMethod(testMethod_) {}
         void TestBody() override {
             auto& a = static_cast<TestSuite&>(*this);
             (testMethod)(a);
@@ -83,8 +98,6 @@ namespace to { namespace gtest {
 
 }
 }
-    // Close namespaces
-
 }
 
 
@@ -95,6 +108,17 @@ namespace to { namespace gtest {
     public: \
         void TestBody() override {} \
         [[nodiscard]] auto GetAllTests_() { std::vector<TestDataType> allTestData{}
+
+/// Takes a suite name and a base class, adds all the tests from the base class to this suite
+#define CPPUNIT_TEST_SUB_SUITE(SuiteName, BaseClass) \
+    using Cpp2GTest_BaseClass = BaseClass; \
+    CPPUNIT_TEST_SUITE(SuiteName); \
+    [&]() -> void { \
+        auto base_tests = static_cast<Cpp2GTest_BaseClass&>(*this).GetAllTests_(); \
+        for (auto& test : base_tests) {         \
+            allTestData.emplace_back(test);     \
+        } \
+    }()
 
 /// Adds a test to the vector of tests on the class (and allows for semicolon)
 #define CPPUNIT_TEST(test_name) \
