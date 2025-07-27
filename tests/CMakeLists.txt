@@ -21,24 +21,27 @@ list(APPEND CppUnitFiles
 )
 if (BuildExamples)
 #    add_subdirectory(examples)
-    list(APPEND CppUnitFiles "examples/Money.cpp")
+    list(APPEND CppUnitFiles
+            "examples/Money.cpp"
+            "examples/Simple.cpp"
+            "examples/Hierarchy.cpp"
+    )
 endif()
 if (BuildInternalTests)
 #    add_subdirectory(internal_tests)
 #    list(APPEND CppUnitFiles ${CppunitToGtestTests_SourceFiles})
 endif()
 
-
-
-add_executable(${PROJECT_NAME} ${CppUnitFiles}
-        examples/Hierarchy.cpp)
+add_executable(${PROJECT_NAME} ${CppUnitFiles})
 target_link_libraries(${PROJECT_NAME} PRIVATE GTest::GTest GTest::Main)
 
 # Create links to our main file so they can be used by cppunit style imports
 include(CreateSymlink.cmake)
 set(SOURCE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/../CppUnit2Gtest.hpp")
 
+# Allow using files that cppunit has, old style ifdef guards avoid issues with multiple defines
 create_file_link("${SOURCE_FILE}" "${CMAKE_CURRENT_SOURCE_DIR}/cppunit/portability/Stream.h")
 create_file_link("${SOURCE_FILE}" "${CMAKE_CURRENT_SOURCE_DIR}/cppunit/extensions/HelperMacros.h")
+create_file_link("${SOURCE_FILE}" "${CMAKE_CURRENT_SOURCE_DIR}/cppunit/config/SourcePrefix.h")
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

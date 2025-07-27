@@ -130,8 +130,39 @@ namespace to { namespace gtest {
         allTestData.emplace_back(test_pointer, __LINE__, #test_name); \
     }()
 
+/// This functionality is deprecated from CppUnit and we recomend changing any usages to
+///  use the more readable and expressive `ASSERT_THROW( expression, exception);`
+#define CPPUNIT_TEST_EXCEPTION(test_name, exception) \
+    [&](){ \
+        const auto test_pointer =+[](Cpp2GTest_CurrentClass& c) { \
+            auto t = Cpp2GTest_CurrentClass::test_name; \
+            ASSERT_THROW( (c.*t)() , exception ); \
+        }; \
+        allTestData.emplace_back(test_pointer, __LINE__, #test_name); \
+    }()
+
+#define CPPUNIT_TEST_FAIL(v) static_assert(false, \
+    "CPPUNIT_TEST_FAIL was called with " #v ". It is not supported. \n" \
+    " It's intetion is to test custom CPPUNIT macros. \n" \
+    " We do not support custom macros so it is moot/pointless\n" \
+    " Please rewrite the test in GTest"\
+)
+
+// We could add CPPUNIT_TEST_SUITE_ADD_CUSTOM_TESTS with some complicated types
+//  If it gets requested I will have a look
+
+// If we want CPPUNIT_TEST_SUITE_PROPERTY we have to call `::testing::Test::RecordProperty`
+//  but we have to do it after SetUpTestSuite and before TearDownTestSuite
+//  the macro is called between CPPUNIT_TEST_SUITE and CPPUNIT_TEST_SUITE_END (needs proof)
+//   so we'd need some state on the class and set it in the `GetAllTests_` function
+
+
+
 /// Ends the vector of tests
 #define CPPUNIT_TEST_SUITE_END() return allTestData; }
+
+/// Does the same as CPPUNIT_TEST_SUITE_END
+#define CPPUNIT_TEST_SUITE_END_ABSTRACT() CPPUNIT_TEST_SUITE_END()
 
 #define Cpp2Gtest_CONCAT(a, b) Cpp2Gtest_CONCAT_INNER(a, b)
 #define Cpp2Gtest_CONCAT_INNER(a, b) a ## b
@@ -144,6 +175,22 @@ namespace to { namespace gtest {
     ::CppUnit::to::gtest::InternalRegisterTests(Class_name{}.GetAllTests_(), #Class_name, __LINE__, suite_additional_name); \
 }
 
+/// The following macros are for running the tests under a hierarchy,
+///   we don't see the value so they all do nothing
+#define CPPUNIT_REGISTRY_ADD(which, to)
+#define CPPUNIT_REGISTRY_ADD_TO_DEFAULT(which)
+
+// Wasn't tested in CppUnit, not tested here!
+#if CPPUNIT_ENABLE_CU_TEST_MACROS
+#   define CU_TEST_SUITE(tc)                CPPUNIT_TEST_SUITE(tc)
+#   define CU_TEST_SUB_SUITE(tc,sc)         CPPUNIT_TEST_SUB_SUITE(tc,sc)
+#   define CU_TEST(tm)                      CPPUNIT_TEST(tm)
+#   define CU_TEST_SUITE_END()              CPPUNIT_TEST_SUITE_END()
+#   define CU_TEST_SUITE_REGISTRATION(tc)   CPPUNIT_TEST_SUITE_REGISTRATION(tc)
+#endif
+
+#define CPPUNIT_TEST_FIXTURE(FixtureClass,testName) TEST_F(FixtureClass, testName)
+
 // Asserting
 #define CPPUNIT_ASSERT(condition)                                    ASSERT_TRUE(condition)
 #define CPPUNIT_ASSERT_MESSAGE(message, condition)                   ASSERT_TRUE(condition) << message
@@ -155,5 +202,13 @@ namespace to { namespace gtest {
 #define CPPUNIT_ASSERT_THROW_MESSAGE(message, expression, expected)  ASSERT_THROW(expression, expected) << message
 #define CPPUNIT_ASSERT_DOUBLES_EQUAL(a,b, t)                         ASSERT_NEAR(a, b, t)
 #define CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(msg, a, b, t)           ASSERT_NEAR(a, b, t) << msg
+#define CPPUNIT_FAIL(message)                                        FAIL(message)
+#define CPPUNIT_ASSERT_ASSERTION_PASS(e)                             ASSERT_NO_THROW(e)
+#define CPPUNIT_ASSERT_ASSERTION_PASS_MESSAGE(msg, e)                ASSERT_NO_THROW(e) << msg
+
+// Things like assert failed are intentionally not added
+//  We can add them but behaviour could be buggy
+//   (I think an inline lambda counts as a function and therefor ASSERT won't end the function
+//   early so we'd call the lambda, return to outer function then `ASSERT_TRUE(HasFailure());`  (?)
 
 #endif
