@@ -92,22 +92,33 @@ namespace to { namespace gtest {
 #define CPPUNIT_TEST_SUITE(SuiteName) \
     using Cpp2GTest_CurrentClass = SuiteName; \
     using TestDataType = ::CppUnit::to::gtest::TestData<SuiteName>; \
-    public: auto GetAllTests_() { std::vector<TestDataType> allTestData{}
+    public: \
+        void TestBody() override {} \
+        [[nodiscard]] auto GetAllTests_() { std::vector<TestDataType> allTestData{}
 
 /// Adds a test to the vector of tests on the class (and allows for semicolon)
-#define CPPUNIT_TEST(test_name) [&](){ \
-    const auto test_pointer = +[](Cpp2GTest_CurrentClass& c) { c. test_name (); }; \
-    allTestData.emplace_back(test_pointer, __LINE__, #test_name); }()
+#define CPPUNIT_TEST(test_name) \
+    [&](){ \
+        const auto test_pointer =+[](Cpp2GTest_CurrentClass& c) { \
+            auto t = Cpp2GTest_CurrentClass::test_name; \
+            (c.*t)(); \
+        }; \
+        allTestData.emplace_back(test_pointer, __LINE__, #test_name); \
+    }()
 
 /// Ends the vector of tests
-#define CPPUNIT_TEST_SUITE_END() } }
+#define CPPUNIT_TEST_SUITE_END() return allTestData; }
+
+#define Cpp2Gtest_CONCAT(a, b) Cpp2Gtest_CONCAT_INNER(a, b)
+#define Cpp2Gtest_CONCAT_INNER(a, b) a ## b
+#define Cpp2Gtest_UNIQUE_NAME(base) Cpp2Gtest_CONCAT(base, __LINE__)
 
 #define CPPUNIT_TEST_SUITE_REGISTRATION(Class_name) CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(Class_name, #Class_name)
 
 #define CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(Class_name, suite_additional_name ) namespace{ \
-static const int unused = ::CppUnit::to::gtest::InternalRegisterTests(Class_name{}.GetAllTests_(), #Class_name, __LINE__, suite_additional_name); }
-// TODO:         ^^^^^^ requires a unique name
-
+    static const int Cpp2Gtest_UNIQUE_NAME(unused_) = \
+    ::CppUnit::to::gtest::InternalRegisterTests(Class_name{}.GetAllTests_(), #Class_name, __LINE__, suite_additional_name); \
+}
 
 // Asserting
 #define CPPUNIT_ASSERT(condition)                                    ASSERT_TRUE(condition)

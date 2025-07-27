@@ -56,20 +56,12 @@ inline CPPUNIT_NS::OStream &operator <<( CPPUNIT_NS::OStream &os, const Money &v
 
 class MoneyTest : public CPPUNIT_NS::TestFixture
 {
-    using Cpp2GTest_CurrentClass = MoneyTest;
-    using TestDataType = ::CppUnit::to::gtest::TestData<MoneyTest>;
-
-public:
-    void TestBody() override {}
-    [[nodiscard]] auto GetAllTests_()  {
-        std::vector<TestDataType> allTestData{};
-        [&]() {
-            const auto test_pointer = +[](Cpp2GTest_CurrentClass& c) { auto t = Cpp2GTest_CurrentClass::testConstructor; (c.*t)(); };
-            allTestData.emplace_back(test_pointer, 65, "testConstructor");
-        }();
-
-        return allTestData;
-    }
+    CPPUNIT_TEST_SUITE(MoneyTest);
+    CPPUNIT_TEST(testConstructor);
+    CPPUNIT_TEST(testEqual);
+    CPPUNIT_TEST(testAdd);
+    CPPUNIT_TEST(testAddThrow);
+    CPPUNIT_TEST_SUITE_END();
 public:
     void setUp()    {};
     void tearDown() {};
