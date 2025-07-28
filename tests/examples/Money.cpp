@@ -61,6 +61,7 @@ class MoneyTest : public CPPUNIT_NS::TestFixture
     CPPUNIT_TEST(testEqual);
     CPPUNIT_TEST(testAdd);
     CPPUNIT_TEST(testAddThrow);
+    CPPUNIT_TEST(testStream);
     CPPUNIT_TEST_SUITE_END();
 public:
     void setUp()    {};
@@ -114,6 +115,19 @@ public:
         // Process
         Money money( 123, "USD" );
         CPPUNIT_ASSERT_THROW( money += money123FF, IncompatibleMoneyError );
+    }
+
+    // CppUnit2GTest: Added to get 100% coverage
+    void testStream() const {
+        std::ostringstream oss{};
+        Money money( 1234.5678, std::string{"FF"} );
+        oss << money << "\n";
+        const auto final_string = oss.str();
+        CPPUNIT_ASSERT(std::string::npos != final_string.find("1234"));
+        CPPUNIT_ASSERT(std::string::npos != final_string.find("FF"));
+        CPPUNIT_ASSERT(std::string::npos != final_string.find("Money"));
+        CPPUNIT_ASSERT(std::string::npos != final_string.find("value"));
+        CPPUNIT_ASSERT(std::string::npos != final_string.find("currency"));
     }
 };
 

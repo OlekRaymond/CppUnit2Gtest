@@ -34,8 +34,10 @@ protected:
     void example() const {
       CPPUNIT_ASSERT_DOUBLES_EQUAL( 1.0, 1.1, 0.5 );
       ASSERT_NEAR(1.0, 1.1, 0.5);
+      // This doesn't work (?)
+      // EXPECT_FATAL_FAILURE( ( CPPUNIT_ASSERT_DOUBLES_EQUAL( 1.0, 1.1, 0.05 ); ), "");
+      //  so recreate it:
       EXPECT_FATAL_FAILURE( ASSERT_NEAR(1.0, 1.1, 0.05); , "");
-      // EXPECT_FATAL_FAILURE( ( CPPUNIT_ASSERT_DOUBLES_EQUAL( 1.0, 1.1, 0.05 ); ), "0.0");
       EXPECT_FATAL_FAILURE(CPPUNIT_ASSERT( 1 == 0 ), "1 == 0");
       CPPUNIT_ASSERT( 1 == 1 );
     }
