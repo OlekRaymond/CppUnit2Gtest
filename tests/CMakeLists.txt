@@ -20,7 +20,6 @@ list(APPEND CppUnitFiles
         "cppunit/portability/Stream.h"
 )
 if (BuildExamples)
-#    add_subdirectory(examples)
     list(APPEND CppUnitFiles
             "examples/Money.cpp"
             "examples/Simple.cpp"
@@ -28,8 +27,10 @@ if (BuildExamples)
     )
 endif()
 if (BuildInternalTests)
-#    add_subdirectory(internal_tests)
-#    list(APPEND CppUnitFiles ${CppunitToGtestTests_SourceFiles})
+    list(APPEND CppUnitFiles
+        "internal_tests/DeprecatedDeclareThrow.cpp"
+        "internal_tests/CheckFailures.cpp"
+    )
 endif()
 
 add_executable(${PROJECT_NAME} ${CppUnitFiles})
