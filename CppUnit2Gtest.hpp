@@ -124,7 +124,7 @@ namespace to { namespace gtest {
 #define CPPUNIT_TEST(test_name) \
     [&](){ \
         const auto test_pointer =+[](Cpp2GTest_CurrentClass& c) { \
-            auto t = Cpp2GTest_CurrentClass::test_name; \
+            auto t = &Cpp2GTest_CurrentClass::test_name; \
             (c.*t)(); \
         }; \
         allTestData.emplace_back(test_pointer, __LINE__, #test_name); \
@@ -135,7 +135,7 @@ namespace to { namespace gtest {
 #define CPPUNIT_TEST_EXCEPTION(test_name, exception) \
     [&](){ \
         const auto test_pointer =+[](Cpp2GTest_CurrentClass& c) { \
-            auto t = Cpp2GTest_CurrentClass::test_name; \
+            auto t = &Cpp2GTest_CurrentClass::test_name; \
             ASSERT_THROW( (c.*t)() , exception ); \
         }; \
         allTestData.emplace_back(test_pointer, __LINE__, #test_name); \
