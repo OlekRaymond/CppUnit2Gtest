@@ -92,6 +92,8 @@ public:
         CPPUNIT_ASSERT( money12FF != money123FF );     // != amount
         CPPUNIT_ASSERT( money123USD != money123FF );   // != currency
         CPPUNIT_ASSERT( money12USD != money123FF );    // != currency and != amount
+        // CppUnit2Gtest: Added to remove mutant
+        CPPUNIT_ASSERT( !(money123FF != money123FF) );
     }
 
     void testAdd() {
@@ -129,6 +131,8 @@ public:
         CPPUNIT_ASSERT(std::string::npos != final_string.find("value"));
         CPPUNIT_ASSERT(std::string::npos != final_string.find("currency"));
     }
+
+    
 };
 
 // Registers the fixture into the 'registry'

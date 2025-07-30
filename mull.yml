@@ -1,3 +1,11 @@
-excludePaths: # support regex
+debug:
+  slowIRVerification: true
+mutators:
+  - cxx_all
+  - experimental
+ignoreMutators:
+  # Without this compilation exits with: Uh oh! Mull corrupted LLVM module. 
+  - scalar_value_mutator
+excludePaths:
   - gtest
   - gmock

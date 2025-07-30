@@ -3,7 +3,9 @@
 namespace {
 
     struct ExampleTestSuite : CppUnit::TestCase {
-        void testConstructor() {}
+        void TestBody() {}
+        void testConstructor() { called = true; }
+        bool called = false;
     };
 
     TEST(TestTestData, GoodValues) {
@@ -11,7 +13,13 @@ namespace {
             +[](ExampleTestSuite& e){ e.testConstructor(); }, 0, ""
         };
         ASSERT_TRUE(test_data.line == 0);
-        // Did not throw
+        ASSERT_TRUE(test_data.testMethod != nullptr);
+        ASSERT_TRUE(test_data.testName != nullptr );
+        ASSERT_TRUE(test_data.testName == std::string{""});
+
+        ExampleTestSuite someTestSuite{};
+        (*test_data.testMethod)(someTestSuite);
+        ASSERT_TRUE(someTestSuite.called);
     }
 
     TEST(TestTestData, NullName) {

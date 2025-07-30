@@ -28,9 +28,9 @@ if (BuildExamples)
 endif()
 if (BuildInternalTests)
     list(APPEND CppUnitFiles
-#        "internal_tests/DeprecatedDeclareThrow.cpp"
-#        "internal_tests/CheckFailures.cpp"
-#        "internal_tests/RegisteringTests.cpp"
+        "internal_tests/DeprecatedDeclareThrow.cpp"
+        "internal_tests/CheckFailures.cpp"
+        "internal_tests/RegisteringTests.cpp"
         "internal_tests/TestTestData.cpp"
         "internal_tests/TestGettingData.cpp"
     )

@@ -89,7 +89,7 @@ namespace to { namespace gtest {
     };
 
     template<typename TestSuite>
-    int InteralRegisterTests(
+    int InternalRegisterTestsVector(
         std::vector<TestData<TestSuite>>& testSuiteData,
         const char* file_name,
         const int line_number,
@@ -118,7 +118,7 @@ namespace to { namespace gtest {
         TestSuite base_suite{};
         std::vector<TestData<TestSuite>> tests = base_suite.GetAllTests_();
 
-        InteralRegisterTests(tests, file_name, line_number, fixtureName);
+        InternalRegisterTestsVector(tests, file_name, line_number, fixtureName);
         // return an int so we can call this statically a bit easier
         return __LINE__;
         //  (Use something that can change to avoid people doing asserts on it)

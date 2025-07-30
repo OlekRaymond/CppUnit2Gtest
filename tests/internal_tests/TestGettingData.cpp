@@ -56,10 +56,10 @@ namespace {
             CPPUNIT_ASSERT_DOUBLES_EQUAL( longNumber, money.getAmount(), 0.0001 );
             CPPUNIT_ASSERT_EQUAL( currencyFF, money.getCurrency() );
         }
-
+        
     };
 
-    TEST(TetsGettingData, MocksMoney) {
+    TEST(TestGettingData, MocksMoney) {
         auto all = MonkeyTest {}.GetAllTests_();
         ASSERT_EQ(all.size(), 1);
         ASSERT_EQ(all.front().testName, std::string{"testConstructor"});
@@ -67,9 +67,9 @@ namespace {
         ASSERT_NE(all.front().testName, nullptr);
     }
 
-    TEST(TetsGettingData, RegisterMonkey) {
-        auto all = MonkeyTest {}.GetAllTests_();
-        // ::CppUnit::to::gtest::InternalRegisterTests(std::move(all), "", 0, "");
+    TEST(TestGettingData, RegisterMonkey) {
+        ::CppUnit::to::gtest::InternalRegisterTests<MonkeyTest>( "", 0, "");
+        // Assert No throw
     }
 }
 
