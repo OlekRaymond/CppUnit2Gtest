@@ -37,6 +37,11 @@ namespace CppUnit {
 #endif
 
 namespace to { namespace gtest {
+#define CppUnit2Gtest_CHECK(condition) \
+        if (!(condition)) { \
+            throw std::runtime_error("Internal Check failed when running test harness " #condition ); \
+        }
+
     template<typename FromClass>
     struct TestData {
         using TestMethodType = void(*)(FromClass&);
@@ -48,7 +53,11 @@ namespace to { namespace gtest {
             : testMethod(testMethod_)
             , line(line_)
             , testName(testName_)
-        {}
+        {
+            CppUnit2Gtest_CHECK(testMethod != nullptr);
+            CppUnit2Gtest_CHECK(testName != nullptr);
+            CppUnit2Gtest_CHECK(testName_ != nullptr);
+        }
 
         TestData(const TestData&) = default;
         TestData(TestData&&) = default;
@@ -61,6 +70,9 @@ namespace to { namespace gtest {
             , line(from.line)
             , testName(from.testName)
         {
+            CppUnit2Gtest_CHECK(testMethod != nullptr);
+            CppUnit2Gtest_CHECK(testName != nullptr);
+            CppUnit2Gtest_CHECK(from.testMethod != nullptr);
         }
     };
 
@@ -76,20 +88,37 @@ namespace to { namespace gtest {
         }
     };
 
-    template<typename Class>
-    int InternalRegisterTests(std::vector<TestData<Class>>&& tests, const char* file_name, int line_number, const char* fixtureName )
+    template<typename TestSuite>
+    int InteralRegisterTests(
+        std::vector<TestData<TestSuite>>& testSuiteData,
+        const char* file_name,
+        const int line_number,
+        const char* fixtureName)
     {
-        for(auto& testData : tests)
+        for(auto& testData : testSuiteData)
         {
-            auto& testMethod = testData.testMethod;
+            auto testMethod = testData.testMethod;
             // Register the test programmatically
             ::testing::RegisterTest(
-                fixtureName,                        // name of the fixture
-                testData.testName,                  // name of the test
-                nullptr, nullptr,         // argument details for parametrised tests
-                file_name, line_number,             // For the log
-                [testMethod]() -> DynamicTest<Class>* { return new DynamicTest<Class>(testMethod); } );
+                 fixtureName,              // name of the fixture
+                 testData.testName,        // name of the test
+                 nullptr, nullptr,         // argument details for parametrised tests
+                 file_name, line_number,   // For the log
+                 [testMethod]() -> DynamicTest<TestSuite>* { return new DynamicTest<TestSuite>(testMethod); }
+             );
         }
+        return __LINE__;
+    }
+
+    template<typename TestSuite>
+    int InternalRegisterTests(const char* file_name, int line_number, const char* fixtureName )
+    {
+        CppUnit2Gtest_CHECK(file_name != nullptr);
+        CppUnit2Gtest_CHECK(fixtureName != nullptr);
+        TestSuite base_suite{};
+        std::vector<TestData<TestSuite>> tests = base_suite.GetAllTests_();
+
+        InteralRegisterTests(tests, file_name, line_number, fixtureName);
         // return an int so we can call this statically a bit easier
         return __LINE__;
         //  (Use something that can change to avoid people doing asserts on it)
@@ -123,22 +152,22 @@ namespace to { namespace gtest {
 /// Adds a test to the vector of tests on the class (and allows for semicolon)
 #define CPPUNIT_TEST(test_name) \
     [&](){ \
-        const auto test_pointer =+[](Cpp2GTest_CurrentClass& c) { \
-            auto t = &Cpp2GTest_CurrentClass::test_name; \
+        auto test_pointer = +[](Cpp2GTest_CurrentClass& c) { \
+            auto t = &Cpp2GTest_CurrentClass:: test_name ; \
             (c.*t)(); \
         }; \
         allTestData.emplace_back(test_pointer, __LINE__, #test_name); \
     }()
 
-/// This functionality is deprecated from CppUnit and we recomend changing any usages to
+/// This functionality is deprecated from CppUnit, we recommend changing any usages to
 ///  use the more readable and expressive `ASSERT_THROW( expression, exception);`
 #define CPPUNIT_TEST_EXCEPTION(test_name, exception) \
     [&](){ \
-        const auto test_pointer =+[](Cpp2GTest_CurrentClass& c) { \
-            auto t = &Cpp2GTest_CurrentClass::test_name; \
+        auto test_pointer = +[](Cpp2GTest_CurrentClass& c) { \
+            auto t = &Cpp2GTest_CurrentClass:: test_name ; \
             ASSERT_THROW( (c.*t)() , exception ); \
         }; \
-        allTestData.emplace_back(test_pointer, __LINE__, #test_name); \
+        allTestData.emplace_back(test_pointer, __LINE__, #test_name ); \
     }()
 
 #define CPPUNIT_TEST_FAIL(v) static_assert(false, \
@@ -172,7 +201,7 @@ namespace to { namespace gtest {
 
 #define CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(Class_name, suite_additional_name ) namespace{ \
     static const int Cpp2Gtest_UNIQUE_NAME(unused_) = \
-    ::CppUnit::to::gtest::InternalRegisterTests(Class_name{}.GetAllTests_(), #Class_name, __LINE__, suite_additional_name); \
+    ::CppUnit::to::gtest::InternalRegisterTests<Class_name>(#Class_name, __LINE__, suite_additional_name); \
 }
 
 /// The following macros are for running the tests under a hierarchy,

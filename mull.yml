@@ -1,0 +1,3 @@
+excludePaths: # support regex
+  - gtest
+  - gmock
