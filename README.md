@@ -1,54 +1,84 @@
 # CppUnit to Gtest
 
-## What is CppUnit?
-Cppunit is a C++ testing framework inspired 
-by the similarly named Java testing framework [Junit](https://junit.org/).
+A C++ adapter library that allows CppUnit tests to run with Google Test (gtest) without requiring complete test rewrites.
 
-In the early 2000s it was used extensively and was seen 
-as a great testing framework. In modern times however people
-often prefer other frameworks such as [catch2](https://github.com/catchorg/Catch2) or [gtest](https://github.com/google/googletest).
+## Quick Start
+
+1. Copy the header file `CppUnit2Gtest.hpp` from the root of this repository
+2. Replace CppUnit headers in your tests - preferably using symlinks to maintain compatibility
+3. Link your tests with Google Test instead of CppUnit
+4. Edit your `main` function to remove CppUnit requirements (or delete it and link to gtest's `main` function)
+5. Run your tests and see them work without modification
+
+
+**CMake Support:** Coming soon - we plan to provide a CMake package that can optionally shadow CppUnit's CMake package for seamless integration.
+
+## What is CppUnit?
+CppUnit is a C++ testing framework inspired by the Java testing framework [JUnit](https://junit.org/). 
+It was widely used in the early 2000s but has since been superseded by modern frameworks like 
+[Catch2](https://github.com/catchorg/Catch2) and [Google Test](https://github.com/google/googletest).
 
 CppUnit has been significantly forked and fractured. 
-The most up-to-date version I can see is [here](https://freedesktop.org/wiki/Software/cppunit/)
-though the [source forge fork](https://sourceforge.net/projects/cppunit/) is often used.
+The most up-to-date version is available [here](https://freedesktop.org/wiki/Software/cppunit/),
+though the [SourceForge fork](https://sourceforge.net/projects/cppunit/) is also commonly used.
 
-## Why not Cppunit?
+## Why Migrate from CppUnit?
 
-CppUnit does not share many similarities with Junit
-(partially due to C++ having less functionality available) 
-so is not as easy to use. 
+While CppUnit served its purpose well, modern testing frameworks like Google Test offer significant advantages.
 
-This project was started because of CppUnit's lack of memory management
-which lead to my leak sanitizer giving a lot of false positives. 
+### Memory Management Issues
+This project was primarily motivated by CppUnit's memory management problems, which cause false positives 
+in leak sanitizers. While workarounds exist, managing extensive blacklists for multiple files becomes unwieldy.
 
-There are ways around this but having one or more leaks 
-per file means a large blacklist was challenging.
+### Google Test Advantages
 
-Gtest is good! Gtest gives me all the tools I need out of the box:
- - Tracking of time each test has taken and displaying it in output
-   + Cppunit has a clocker plugin which needs to be explicitly added in the main section of the program
- - Easily readable test output
-   + Each failing test gives an error to say it has failed, a reasoning as to why it has failed and what the problem lines where
-   + Test output is green for passing tests and red for failing ones (if the terminal supports it or if added explicitly as I do for gitlab CI)
-   + Cppunit gives "pass" or "fail" by default
- - Catches obscure errors
-   + GTest catches things that Cppunit does not like odd internal windows exceptions that cannot be caught with a `try{` block and instead need a `__try`
-   + CppUnit does not catch all exceptions and instead terminates the program if a custom uncatchable exception is thrown
-- Junit output
-  + Despite Cppunit being a port of Junit the xml output file does not match the Junit one, as Junit has become the norm for CI pipelines this means that an output-er needs to be custom written
-  + GTest comes with this ability built in
+**Better Test Execution**
+- Built-in timing for individual tests with clear output
+- Superior exception handling, including platform-specific exceptions (e.g., Windows SEH exceptions)
+- Comprehensive error catching that prevents program termination
+
+**Improved Output and Reporting**
+- Color-coded output (green for pass, red for fail) with terminal support
+- Detailed failure messages with line numbers and reasoning
+- Native JUnit XML output format for CI/CD integration
+- Rich assertion macros with informative failure messages
+
+**Developer Experience**
+- Modern C++ features and idioms
+- Extensive documentation and community support
+- Active development and maintenance
+
 
 ## Why not rewrite all my tests instead of using this?
-You should! 
+**You should eventually!** 
 
-This aims to allow for incremental adoption of GTest rather than force its usage everywhere.
-A wiser approach might be to automate some changes using a python script.
+For large codebases, this adapter provides a migration path that allows you to:
+
+- Maintain existing CppUnit tests while gradually migrating to Google Test
+- Validate that migrated tests produce identical results
+- Avoid the risk and cost of rewriting large test suites all at once
+
+For automated migration, consider writing a Python script to handle mechanical transformations.
 
 [//]: # (TODO: Write said python script and add it to the repo)
 
 ## Features
 
-We don't aim to add every feature of CppUnit but if we are missing something please write an example test case in an issue!
+We focus on supporting the most commonly used CppUnit features rather than achieving 100% compatibility. 
+If you need additional functionality, please create an issue with an example test case demonstrating the missing feature.
 
-We currently support all features shown in the CppUnit repo's examples and no more.
+We currently support these features:
+- All features demonstrated in the official CppUnit repository examples, as [seen here](./tests/examples).
+- Adding tests using CppUnit macros (`CPPUNIT_TEST` and `CPPUNIT_TEST_EXCEPTION` after `CPPUNIT_TEST_SUITE` or `CPPUNIT_TEST_SUB_SUITE`)
+- Registering using CppUnit's macros (`CPPUNIT_TEST_SUITE_REGISTRATION` or `CPPUNIT_TEST_SUITE_NAMED_REGISTRATION` must be called to register tests)
+- CppUnit's specialized assertion macros, allowing custom messages (or using gtest's streams)
 
+## Contributing
+
+**Summary:** Create an issue, fork the repo, submit a PR, ensure CI passes, and wait patiently for review.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+
+## License
+
+**Summary:** Attribution required for redistribution; commercial modifications must be made public or contributed back.
+See [LICENSE](./LICENSE) for full details.
