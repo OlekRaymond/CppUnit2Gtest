@@ -60,6 +60,7 @@ For large codebases, this adapter provides a migration path that allows you to:
 - Avoid the risk and cost of rewriting large test suites all at once
 
 For automated migration, consider writing a Python script to handle mechanical transformations.
+
 [//]: # (TODO: Write said python script and add it to the repo)
 
 ## Features
@@ -75,11 +76,10 @@ We currently support these features:
 
 ## Contributing
 
+**Summary:** Create an issue, fork the repo, submit a PR, ensure CI passes, and wait patiently for review.
 See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
-**Summary:** Create an issue, fork the repo, submit a PR, ensure CI passes, and wait patiently for review.
-
-## Licence
-See [LICENSE](./LICENSE) for full details.
+## License
 
 **Summary:** Attribution required for redistribution; commercial modifications must be made public or contributed back.
+See [LICENSE](./LICENSE) for full details.
