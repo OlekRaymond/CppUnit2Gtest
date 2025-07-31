@@ -1,5 +1,5 @@
-debug:
-  slowIRVerification: true
+#debug:
+#  slowIRVerification: true
 mutators:
   - cxx_all
   - experimental
