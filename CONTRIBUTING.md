@@ -38,11 +38,10 @@ When reporting bugs, please include:
 For feature requests:
 - Describe the CppUnit feature you need supported
 - Provide an example test case showing the desired functionality
-- Explain your use case and why this feature would be valuable
 
 ### Making Changes
 
-1. **Create an issue first** (unless fixing a trivial typo)
+1. **Create an issue first**
    - Discuss your proposed changes before implementing
    - This helps avoid duplicate work and ensures alignment with project goals
 
@@ -59,10 +58,10 @@ For feature requests:
 4. **Test your changes thoroughly**
    - Run the full test suite: `ctest --test-dir build`
    - Test with both the examples and internal tests
-   - Verify your changes work with real CppUnit test cases
+   - Add real CppUnit test cases to examples if required
 
 5. **Submit a Pull Request**
-   - Reference the issue number in your PR description
+   - Reference the issue number in your PR description (i.e. "Closes #42") 
    - Provide a clear description of what your changes do
    - Explain why the changes are necessary
    - Include any breaking changes or migration notes
@@ -93,6 +92,7 @@ Test categories:
 1. **Automated checks**: All PRs must pass CI checks
    - All tests must pass
    - Code coverage must remain at 100%
+   - Surving mutants with [Mull](https://github.com/mull-project/mull) must remain low.
 
 2. **Manual review**: A maintainer will review your PR
    - Be patient - reviews may take time
