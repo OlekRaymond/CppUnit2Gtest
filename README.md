@@ -4,7 +4,6 @@ A C++ adapter library that allows CppUnit tests to run with Google Test (gtest) 
 
 ## Quick Start
 
-Copy the header file `CppUnit2Gtest.hpp` in the root of the repo. Either change tests to include it instead of the cppunit headers or use symlinks instead.
 1. Copy the header file `CppUnit2Gtest.hpp` from the root of this repository
 2. Replace CppUnit headers in your tests - preferably using symlinks to maintain compatibility
 3. Link your tests with Google Test instead of CppUnit
