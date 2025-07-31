@@ -49,3 +49,5 @@ create_file_link("${SOURCE_FILE}" "${CMAKE_CURRENT_SOURCE_DIR}/cppunit/extension
 create_file_link("${SOURCE_FILE}" "${CMAKE_CURRENT_SOURCE_DIR}/cppunit/config/SourcePrefix.h")
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+add_test(NAME AllTests COMMAND ${PROJECT_NAME})
