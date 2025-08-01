@@ -8,6 +8,11 @@ cmake_minimum_required(VERSION 3.2...3.33)
 
 project(CppUnitToGtest_AllTests)
 
+if (NOT MSVC)
+    add_compile_options(-g -fsanitize=address)
+    add_link_options(-g -fsanitize=address)
+endif()
+
 include(GetGtest.cmake)
 
 option(BuildExamples "Should the examples be built when build_testing is on" ON)
@@ -39,10 +44,6 @@ endif()
 add_executable(${PROJECT_NAME} ${CppUnitFiles})
 target_link_libraries(${PROJECT_NAME} PRIVATE GTest::GTest GTest::Main)
 
-if (NOT MSVC)
-    add_compile_options("-fsanitize=address")
-    add_link_options("-fsanitize=address")
-endif()
 # Create links to our main file so they can be used by cppunit style imports
 include(CreateSymlink.cmake)
 set(SOURCE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/../CppUnit2Gtest.hpp")

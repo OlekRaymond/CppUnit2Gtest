@@ -95,6 +95,8 @@ namespace to { namespace gtest {
         const int line_number,
         const char* fixtureName)
     {
+        CppUnit2Gtest_CHECK(file_name != nullptr);
+        CppUnit2Gtest_CHECK(fixtureName != nullptr);
         for(auto& testData : testSuiteData)
         {
             auto testMethod = testData.testMethod;
@@ -113,8 +115,6 @@ namespace to { namespace gtest {
     template<typename TestSuite>
     int InternalRegisterTests(const char* file_name, int line_number, const char* fixtureName )
     {
-        CppUnit2Gtest_CHECK(file_name != nullptr);
-        CppUnit2Gtest_CHECK(fixtureName != nullptr);
         TestSuite base_suite{};
         std::vector<TestData<TestSuite>> tests = base_suite.GetAllTests_();
 
