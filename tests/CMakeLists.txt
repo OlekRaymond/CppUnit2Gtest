@@ -8,6 +8,11 @@ cmake_minimum_required(VERSION 3.2...3.33)
 
 project(CppUnitToGtest_AllTests)
 
+if (NOT MSVC)
+    add_compile_options(-g -fsanitize=address)
+    add_link_options(-g -fsanitize=address)
+endif()
+
 include(GetGtest.cmake)
 
 option(BuildExamples "Should the examples be built when build_testing is on" ON)

@@ -1,3 +1,5 @@
+[![msvc && gcc && clang](https://github.com/OlekRaymond/CppUnit2Gtest/actions/workflows/cmake-multi-platform.yml/badge.svg)](https://github.com/OlekRaymond/CppUnit2Gtest/actions/workflows/cmake-multi-platform.yml)
+
 # CppUnit to Gtest
 
 A C++ adapter library that allows CppUnit tests to run with Google Test (gtest) without requiring complete test rewrites.
