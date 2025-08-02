@@ -10,6 +10,7 @@ namespace CppUnit {
     class TestCase : public testing::Test
     {
     public:
+        TestCase() : testing::Test{} {}
         // Take Cppunit style functions
         virtual void setUp() {}
         virtual void tearDown() {}
@@ -81,7 +82,7 @@ namespace to { namespace gtest {
         using TestSuite::TestSuite;
         using TestMethod = typename TestData<TestSuite>::TestMethodType;
         TestMethod testMethod;
-        explicit DynamicTest(TestMethod testMethod_) : testMethod(testMethod_) {}
+        explicit DynamicTest(TestMethod testMethod_) : testMethod(testMethod_), TestSuite{} {}
         void TestBody() override {
             auto& a = static_cast<TestSuite&>(*this);
             (testMethod)(a);
@@ -129,19 +130,28 @@ namespace to { namespace gtest {
 }
 }
 
-
-/// Takes a suite name and creates a vector of function pointers to the functions given in the registration
-#define CPPUNIT_TEST_SUITE(SuiteName) \
+#define CppUnit2Gtest_CommonTestSuitePreamble(SuiteName) \
     using Cpp2GTest_CurrentClass = SuiteName; \
     using TestDataType = ::CppUnit::to::gtest::TestData<SuiteName>; \
     public: \
-        void TestBody() override {} \
-        [[nodiscard]] auto GetAllTests_() { std::vector<TestDataType> allTestData{}
+        void TestBody() override {}
+
+#define CppUnit2Gtest_CommonTestSuiteStartVec \
+    [[nodiscard]] auto GetAllTests_() { std::vector<TestDataType> allTestData{}
+
+
+/// Takes a suite name and creates a vector of function pointers to the functions given in the registration
+#define CPPUNIT_TEST_SUITE(SuiteName) \
+    CppUnit2Gtest_CommonTestSuitePreamble(SuiteName) \
+    SuiteName () : ::CppUnit::TestFixture{} {} \
+    CppUnit2Gtest_CommonTestSuiteStartVec
 
 /// Takes a suite name and a base class, adds all the tests from the base class to this suite
 #define CPPUNIT_TEST_SUB_SUITE(SuiteName, BaseClass) \
     using Cpp2GTest_BaseClass = BaseClass; \
-    CPPUNIT_TEST_SUITE(SuiteName); \
+    CppUnit2Gtest_CommonTestSuitePreamble(SuiteName) \
+    SuiteName () : Cpp2GTest_BaseClass{} {} \
+    CppUnit2Gtest_CommonTestSuiteStartVec; \
     [&]() -> void { \
         auto base_tests = static_cast<Cpp2GTest_BaseClass&>(*this).GetAllTests_(); \
         for (auto& test : base_tests) {         \

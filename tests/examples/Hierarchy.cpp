@@ -35,9 +35,9 @@ protected:
     GAMECLASS	*m_game;
 
 public:
-    BoardGameTest()
-    {
-    }
+    // BoardGameTest()
+    // {
+    // }
 
     int countTestCases () const
     {
@@ -73,9 +73,9 @@ class ChessTest : public BoardGameTest<GAMECLASS>
     CPPUNIT_TEST( testNumberOfPieces );
     CPPUNIT_TEST_SUITE_END();
 public:
-    ChessTest()
-    {
-    }
+    // ChessTest()
+    // {
+    // }
 
     void testNumberOfPieces()
     {
