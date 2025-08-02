@@ -1,0 +1,4 @@
+
+@PACKAGE_INIT@
+
+check_required_components(core_project)
