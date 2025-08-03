@@ -13,7 +13,7 @@ function(create_file_link source_file target_file)
 
     if(EXISTS "${target_file}")
         # Do nothing
-        message(STATUS "Target file already exists")
+        message(STATUS "Target file already exists, not creating ${target_file}")
     else()
         # Create the target directory if it doesn't exist
         file(MAKE_DIRECTORY "${target_dir}")
