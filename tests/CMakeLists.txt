@@ -15,6 +15,15 @@ option(BuildInternalTests "Should we build the internal tests" OFF)
 
 set(CMAKE_CXX_STANDARD 17)
 
+# Create links to our main file so they can be used by cppunit style imports
+include(CreateSymlink.cmake)
+set(SOURCE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/../CppUnit2Gtest.hpp")
+
+# Allow using files that cppunit has, old style ifdef guards avoid issues with multiple defines
+create_file_link("${SOURCE_FILE}" "${CMAKE_CURRENT_LIST_DIR}/cppunit/portability/Stream.h")
+create_file_link("${SOURCE_FILE}" "${CMAKE_CURRENT_LIST_DIR}/cppunit/extensions/HelperMacros.h")
+create_file_link("${SOURCE_FILE}" "${CMAKE_CURRENT_LIST_DIR}/cppunit/config/SourcePrefix.h")
+
 list(APPEND CppUnitFiles
         "cppunit/extensions/HelperMacros.h"
         "cppunit/portability/Stream.h"
@@ -38,15 +47,6 @@ endif()
 
 add_executable(${PROJECT_NAME} ${CppUnitFiles})
 target_link_libraries(${PROJECT_NAME} PRIVATE GTest::GTest GTest::Main)
-
-# Create links to our main file so they can be used by cppunit style imports
-include(CreateSymlink.cmake)
-set(SOURCE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/../CppUnit2Gtest.hpp")
-
-# Allow using files that cppunit has, old style ifdef guards avoid issues with multiple defines
-create_file_link("${SOURCE_FILE}" "${CMAKE_CURRENT_SOURCE_DIR}/cppunit/portability/Stream.h")
-create_file_link("${SOURCE_FILE}" "${CMAKE_CURRENT_SOURCE_DIR}/cppunit/extensions/HelperMacros.h")
-create_file_link("${SOURCE_FILE}" "${CMAKE_CURRENT_SOURCE_DIR}/cppunit/config/SourcePrefix.h")
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
