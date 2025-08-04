@@ -39,7 +39,7 @@ install(EXPORT CppUnit2GtestTargets
 
 include(CMakePackageConfigHelpers)
 
-# Create a config file that CMake looks for when we call FindPackage(core_project)
+# Create a config file that CMake looks for when we call find_package(core_project)
 configure_package_config_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Config.cmake.in
     "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
