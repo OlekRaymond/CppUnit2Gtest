@@ -107,7 +107,7 @@ namespace to { namespace gtest {
                  [testMethod]() -> DynamicTest<TestSuite>* { return new DynamicTest<TestSuite>(testMethod); }
              );
         }
-        return __LINE__;
+        return __LINE__ + line_number + testSuiteData.size();
     }
 
     template<typename TestSuite>
@@ -120,11 +120,11 @@ namespace to { namespace gtest {
 
         InternalRegisterTestsVector(tests, file_name, line_number, fixtureName);
         // return an int so we can call this statically a bit easier
-        return __LINE__;
+        return __LINE__ + line_number + tests.size();
         //  (Use something that can change to avoid people doing asserts on it)
     }
 
-
+#undef CppUnit2Gtest_CHECK
 }
 }
 }
@@ -186,7 +186,6 @@ namespace to { namespace gtest {
 //   so we'd need some state on the class and set it in the `GetAllTests_` function
 
 
-
 /// Ends the vector of tests
 #define CPPUNIT_TEST_SUITE_END() return allTestData; }
 
@@ -239,5 +238,7 @@ namespace to { namespace gtest {
 //  We can add them but behaviour could be buggy
 //   (I think an inline lambda counts as a function and therefor ASSERT won't end the function
 //   early so we'd call the lambda, return to outer function then `ASSERT_TRUE(HasFailure());`  (?)
+//  Alternatively we can add the gtest header for testing extenstions (see internal tests) and use that.
+//   Neither seem like a good idea
 
 #endif
