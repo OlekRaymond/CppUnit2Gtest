@@ -1,4 +1,6 @@
 [![BuildAndTest](https://github.com/OlekRaymond/CppUnit2Gtest/actions/workflows/cmake-all-tests.yml/badge.svg)](https://github.com/OlekRaymond/CppUnit2Gtest/actions/workflows/cmake-all-tests.yml)
+![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)
+![Mutation Testing](https://img.shields.io/badge/mutation%20testing-94%25%20killed-brightgreen)
 
 # CppUnit to Gtest
 
