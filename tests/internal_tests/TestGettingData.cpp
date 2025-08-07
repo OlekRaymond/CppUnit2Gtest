@@ -13,7 +13,7 @@ namespace {
     };
 
     TEST(TestGettingData, Good) {
-        auto all = S{}.GetAllTests_();
+        auto all = S::GetAllTests_();
         ASSERT_EQ(all.size(), 1);
         ASSERT_EQ(all.front().testName, std::string{"help"});
         ASSERT_NE(all.front().testMethod, nullptr);
@@ -60,7 +60,7 @@ namespace {
     };
 
     TEST(TestGettingData, MocksMoney) {
-        auto all = MonkeyTest {}.GetAllTests_();
+        auto all = MonkeyTest::GetAllTests_();
         ASSERT_EQ(all.size(), 1);
         ASSERT_EQ(all.front().testName, std::string{"testConstructor"});
         ASSERT_NE(all.front().testMethod, nullptr);
