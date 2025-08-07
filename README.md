@@ -1,3 +1,5 @@
+[![BuildAndTest](https://github.com/OlekRaymond/CppUnit2Gtest/actions/workflows/cmake-all-tests.yml/badge.svg)](https://github.com/OlekRaymond/CppUnit2Gtest/actions/workflows/cmake-all-tests.yml)
+
 # CppUnit to Gtest
 
 A C++ adapter library that allows CppUnit tests to run with Google Test (gtest) without requiring complete test rewrites.
