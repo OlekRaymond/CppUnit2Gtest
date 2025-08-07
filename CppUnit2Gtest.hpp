@@ -116,8 +116,7 @@ namespace to { namespace gtest {
     template<typename TestSuite>
     int InternalRegisterTests(const char* file_name, int line_number, const char* fixtureName )
     {
-        TestSuite base_suite{};
-        std::vector<TestData<TestSuite>> tests = base_suite.GetAllTests_();
+        std::vector<TestData<TestSuite>> tests = TestSuite::GetAllTests_();
 
         InternalRegisterTestsVector(tests, file_name, line_number, fixtureName);
         // return an int so we can call this statically a bit easier
@@ -137,7 +136,7 @@ namespace to { namespace gtest {
         void TestBody() override {}
 
 #define CppUnit2Gtest_CommonTestSuiteStartVec \
-    [[nodiscard]] auto GetAllTests_() { std::vector<TestDataType> allTestData{}
+    [[nodiscard]] static auto GetAllTests_() { std::vector<TestDataType> allTestData{}
 
 
 /// Takes a suite name and creates a vector of function pointers to the functions given in the registration
@@ -150,10 +149,9 @@ namespace to { namespace gtest {
 #define CPPUNIT_TEST_SUB_SUITE(SuiteName, BaseClass) \
     using Cpp2GTest_BaseClass = BaseClass; \
     CppUnit2Gtest_CommonTestSuitePreamble(SuiteName) \
-    SuiteName () : Cpp2GTest_BaseClass{} {} \
     CppUnit2Gtest_CommonTestSuiteStartVec; \
     [&]() -> void { \
-        auto base_tests = static_cast<Cpp2GTest_BaseClass&>(*this).GetAllTests_(); \
+        auto base_tests = Cpp2GTest_BaseClass::GetAllTests_(); \
         for (auto& test : base_tests) {         \
             allTestData.emplace_back(test);     \
         } \
