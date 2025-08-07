@@ -61,5 +61,5 @@ else()
 endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
-
+enable_testing()
 add_test(NAME AllTests COMMAND ${PROJECT_NAME})

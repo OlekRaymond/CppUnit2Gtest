@@ -95,6 +95,8 @@ namespace to { namespace gtest {
         const int line_number,
         const char* fixtureName)
     {
+        CppUnit2Gtest_CHECK(file_name != nullptr);
+        CppUnit2Gtest_CHECK(fixtureName != nullptr);
         for(auto& testData : testSuiteData)
         {
             auto testMethod = testData.testMethod;
@@ -113,10 +115,7 @@ namespace to { namespace gtest {
     template<typename TestSuite>
     int InternalRegisterTests(const char* file_name, int line_number, const char* fixtureName )
     {
-        CppUnit2Gtest_CHECK(file_name != nullptr);
-        CppUnit2Gtest_CHECK(fixtureName != nullptr);
-        TestSuite base_suite{};
-        std::vector<TestData<TestSuite>> tests = base_suite.GetAllTests_();
+        std::vector<TestData<TestSuite>> tests = TestSuite::GetAllTests_();
 
         InternalRegisterTestsVector(tests, file_name, line_number, fixtureName);
         // return an int so we can call this statically a bit easier
@@ -136,14 +135,14 @@ namespace to { namespace gtest {
     using TestDataType = ::CppUnit::to::gtest::TestData<SuiteName>; \
     public: \
         void TestBody() override {} \
-        [[nodiscard]] auto GetAllTests_() { std::vector<TestDataType> allTestData{}
+        [[nodiscard]] static auto GetAllTests_() { std::vector<TestDataType> allTestData{}
 
 /// Takes a suite name and a base class, adds all the tests from the base class to this suite
 #define CPPUNIT_TEST_SUB_SUITE(SuiteName, BaseClass) \
     using Cpp2GTest_BaseClass = BaseClass; \
     CPPUNIT_TEST_SUITE(SuiteName); \
     [&]() -> void { \
-        auto base_tests = static_cast<Cpp2GTest_BaseClass&>(*this).GetAllTests_(); \
+        auto base_tests = Cpp2GTest_BaseClass::GetAllTests_(); \
         for (auto& test : base_tests) {         \
             allTestData.emplace_back(test);     \
         } \
@@ -184,7 +183,6 @@ namespace to { namespace gtest {
 //  but we have to do it after SetUpTestSuite and before TearDownTestSuite
 //  the macro is called between CPPUNIT_TEST_SUITE and CPPUNIT_TEST_SUITE_END (needs proof)
 //   so we'd need some state on the class and set it in the `GetAllTests_` function
-
 
 /// Ends the vector of tests
 #define CPPUNIT_TEST_SUITE_END() return allTestData; }
