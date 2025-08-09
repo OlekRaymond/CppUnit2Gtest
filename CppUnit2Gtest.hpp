@@ -21,8 +21,8 @@ namespace CppUnit {
 
     using TestFixture = TestCase;
 // CppUnit does some odd things in the name of portability
-//  We end up undoing a lot of them by default (ironically to maintain portability)
-// Define to avoid the CppUnit::OStream being defined (allows for user defined custom streams)
+//  We end up undoing them by default (ironically to maintain portability)
+/// Define to avoid the CppUnit::OStream being defined (allows for user defined custom streams)
 #ifndef Cppunit2Gtest_NoDeclOStream
 #   if defined(Cppunit2Gtest_StreamType)
         using OStream = Cppunit2Gtest_StreamType;
@@ -37,11 +37,13 @@ namespace CppUnit {
 #endif
 
 namespace to { namespace gtest {
+
 #define CppUnit2Gtest_CHECK(condition) \
         if (!(condition)) { \
             throw std::runtime_error("Internal Check failed when running test harness " #condition ); \
         }
 
+    /// Holds data required for each test.
     template<typename FromClass>
     struct TestData {
         using TestMethodType = void(*)(FromClass&);
@@ -76,6 +78,7 @@ namespace to { namespace gtest {
         }
     };
 
+    /// Includes the TestBody entry point that gtest runs
     template<typename TestSuite>
     struct DynamicTest : TestSuite {
         using TestSuite::TestSuite;
@@ -83,11 +86,13 @@ namespace to { namespace gtest {
         TestMethod testMethod;
         explicit DynamicTest(TestMethod testMethod_) : testMethod(testMethod_) {}
         void TestBody() override {
+            // We inherit from this so safe to cast.
             auto& a = static_cast<TestSuite&>(*this);
             (testMethod)(a);
         }
     };
 
+    /// Registers a vector of tests from a test suite, can be less or more than overload
     template<typename TestSuite>
     int InternalRegisterTestsVector(
         std::vector<TestData<TestSuite>>& testSuiteData,
@@ -95,6 +100,7 @@ namespace to { namespace gtest {
         const int line_number,
         const char* fixtureName)
     {
+        // Never occurs with expected usage so safe to assert.
         CppUnit2Gtest_CHECK(file_name != nullptr);
         CppUnit2Gtest_CHECK(fixtureName != nullptr);
         for(auto& testData : testSuiteData)
@@ -106,12 +112,14 @@ namespace to { namespace gtest {
                  testData.testName,        // name of the test
                  nullptr, nullptr,         // argument details for parametrised tests
                  file_name, line_number,   // For the log
+                 // Any callable that returns adress of an object inheriting testing::Test 
                  [testMethod]() -> DynamicTest<TestSuite>* { return new DynamicTest<TestSuite>(testMethod); }
              );
         }
-        return __LINE__;
+        return __LINE__ + line_number + testSuiteData.size();
     }
 
+    /// Register required tests from a suite 
     template<typename TestSuite>
     int InternalRegisterTests(const char* file_name, int line_number, const char* fixtureName )
     {
@@ -119,11 +127,11 @@ namespace to { namespace gtest {
 
         InternalRegisterTestsVector(tests, file_name, line_number, fixtureName);
         // return an int so we can call this statically a bit easier
-        return __LINE__;
+        return __LINE__ + line_number + tests.size();
         //  (Use something that can change to avoid people doing asserts on it)
     }
 
-
+#undef CppUnit2Gtest_CHECK
 }
 }
 }
@@ -134,7 +142,6 @@ namespace to { namespace gtest {
     using Cpp2GTest_CurrentClass = SuiteName; \
     using TestDataType = ::CppUnit::to::gtest::TestData<SuiteName>; \
     public: \
-        void TestBody() override {} \
         [[nodiscard]] static auto GetAllTests_() { std::vector<TestDataType> allTestData{}
 
 /// Takes a suite name and a base class, adds all the tests from the base class to this suite
@@ -177,18 +184,21 @@ namespace to { namespace gtest {
 )
 
 // We could add CPPUNIT_TEST_SUITE_ADD_CUSTOM_TESTS with some complicated types
-//  If it gets requested I will have a look
+//  Don't add it for now
 
 // If we want CPPUNIT_TEST_SUITE_PROPERTY we have to call `::testing::Test::RecordProperty`
 //  but we have to do it after SetUpTestSuite and before TearDownTestSuite
 //  the macro is called between CPPUNIT_TEST_SUITE and CPPUNIT_TEST_SUITE_END (needs proof)
 //   so we'd need some state on the class and set it in the `GetAllTests_` function
 
-/// Ends the vector of tests
-#define CPPUNIT_TEST_SUITE_END() return allTestData; }
+// Do nothing for now
+#define CPPUNIT_TEST_SUITE_PROPERTY( unused_1, unused_2 ) 
 
-/// Does the same as CPPUNIT_TEST_SUITE_END
-#define CPPUNIT_TEST_SUITE_END_ABSTRACT() CPPUNIT_TEST_SUITE_END()
+/// Ends the vector of tests
+#define CPPUNIT_TEST_SUITE_END() return allTestData; } void TestBody() override {}
+
+/// Does the same as CPPUNIT_TEST_SUITE_END but the class remains abstract
+#define CPPUNIT_TEST_SUITE_END_ABSTRACT() return allTestData; }
 
 #define Cpp2Gtest_CONCAT(a, b) Cpp2Gtest_CONCAT_INNER(a, b)
 #define Cpp2Gtest_CONCAT_INNER(a, b) a ## b
@@ -236,5 +246,7 @@ namespace to { namespace gtest {
 //  We can add them but behaviour could be buggy
 //   (I think an inline lambda counts as a function and therefor ASSERT won't end the function
 //   early so we'd call the lambda, return to outer function then `ASSERT_TRUE(HasFailure());`  (?)
+//  Alternatively we can add the gtest header for testing extenstions (see internal tests) and use that.
+//   Neither seem like a good idea
 
 #endif

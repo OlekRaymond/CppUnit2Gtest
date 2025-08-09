@@ -8,28 +8,27 @@ A C++ adapter library that allows CppUnit tests to run with Google Test (gtest) 
 
 ## Quick Start
 
-### CMake Support: 
-We provide a CMake package that shadow's CppUnit's CMake package for seamless integration.
+### CMake (Recommended):
+We provide a CMake package that shadows CppUnit's CMake package for seamless integration.
 
-To use it build and install this repo:
+**Installation:**
 1. `cmake -B build -S .`
 2. `cmake --build build`
 3. `cmake --install build`
 
-Then in your test's `CMakeLists.txt` use `find_package` and link to the interface lib (and gtest):
++**Usage in your project:**
 ```cmake
 find_package(CppUnit2Gtest REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE CppUnit2Gtest::CppUnit2Gtest)
 find_package(GTest REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE GTest::GTest) 
 ```
-This will provide include paths of `CppUnit2Gtest.hpp` and `cppunit/extenstions/HelperMacros.h` 
-to the target `${PROJECT_NAME}`. You will still need to link to google test.
+This automatically provides `CppUnit2Gtest.hpp` and `cppunit/extensions/HelperMacros.h`, shadowing common CppUnit headers. 
 
 ### Other build systems
-If not using cmake feel free to create an issue suggesting the build system you like supported.
+If you're not using CMake, please create an issue requesting support for your build system.
 
-You can then:
+**Manual Instructions**:
 1. Copy the header file `CppUnit2Gtest.hpp` from the root of this repository
 2. Replace CppUnit headers in your tests - preferably using symlinks to maintain compatibility
 3. Link your tests with Google Test instead of CppUnit
