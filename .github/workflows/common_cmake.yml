@@ -1,0 +1,98 @@
+name: Common CMake building and testing script
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        type: string
+        default: ubuntu-latest
+      c-compiler:
+        type: string
+        required: true
+      cpp-compiler:
+        type: string
+        required: true
+      build-type:
+        type: string
+        default: Release
+      cxx-flags:
+        type: string
+        default: ""
+      c-flags:
+        type: string
+        default: ""
+      cxx-test-flags:
+        type: string
+        default: ""
+      c-test-flags:
+        type: string
+        default: ""
+      build-tests:
+        type: boolean
+        default: true
+      run-tests:
+        type: boolean
+        default: ${{inputs.build-tests}}
+      
+jobs:
+  build:
+    runs-on: ${{ inputs.os }}
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set reusable strings
+      # Turn repeated input strings (such as the build output directory) into step outputs.
+      id: strings
+      shell: bash
+      run: |
+        echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+        echo "install-dir=${{ github.workspace }}/installed" >> "$GITHUB_OUTPUT"
+        echo "build-test-dir=${{ github.workspace }}/build_test" >> "$GITHUB_OUTPUT"
+
+    - name: Configure CMake
+      # Configure CMake in a 'build' subdirectory.
+      run: >
+        cmake -B ${{ steps.strings.outputs.build-output-dir }}
+        -DCMAKE_CXX_COMPILER=${{ inputs.cpp-compiler }}
+        -DCMAKE_C_COMPILER=${{ inputs.c-compiler }}
+        -DCMAKE_BUILD_TYPE=${{ inputs.build-type }}
+        -DCMAKE_CXX_FLAGS=${{inputs.cxx-flags}}
+        -DCMAKE_C_FLAGS=${{inputs.c-flags}}
+        -S ${{ github.workspace }}
+      
+    - name: Build
+      # Does (mostly) nothing, required for install step 
+      run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ inputs.build-type }}
+
+    - name: Install
+      # Install our cmake package
+      run: >
+        cmake --install ${{ steps.strings.outputs.build-output-dir }}
+        --config ${{ inputs.build-type }}
+        --prefix ${{ steps.strings.outputs.install-dir }}
+
+    - name: Test Configure
+      if: ${{inputs.build-tests}}
+      run: >
+        cmake -B ${{ steps.strings.outputs.build-test-dir }}
+        -S ${{ github.workspace }}/tests 
+        -D BuildExamples=ON
+        -D BuildInternalTests=ON
+        -D CMAKE_PREFIX_PATH=${{ steps.strings.outputs.install-dir }}
+        -D CMAKE_C_COMPILER=${{ inputs.c-compiler }}
+        -D CMAKE_CXX_COMPILER=${{ inputs.cpp-compiler }}
+        -D CMAKE_C_FLAGS=${{inputs.c-test-flags}}
+        -D CMAKE_CXX_FLAGS=${{inputs.cxx-test-flags}}
+
+    - name: Build Tests
+      if: ${{inputs.build-tests}}
+      run: >
+        cmake --build ${{ steps.strings.outputs.build-test-dir }}
+        --config ${{ inputs.build-type }}
+
+    - name: Run Tests
+      if: ${{inputs.run-tests}}
+      working-directory: ${{ steps.strings.outputs.build-test-dir }}
+      # Execute tests. Note that --build-config is needed (see build)
+      run: |
+        ctest --build-config ${{ inputs.build-type }} --output-on-failure
