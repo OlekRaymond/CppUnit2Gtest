@@ -1,64 +1,50 @@
 
 on: push
 jobs:
-
   gcc:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: Common build
-      uses: ./.github/workflows/common-cmake.yml
-      with:
-        c-compiler: gcc
-        cpp-compiler: g++
+    uses: ./.github/workflows/common_cmake.yml
+    with:
+      c-compiler: gcc
+      cpp-compiler: g++
 
   clang:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: Common build
-      uses: ./.github/workflows/commoncmake.yml
-      with:
-        c-compiler: clang
-        cpp-compiler: clang++
+    uses: ./.github/workflows/common_cmake.yml
+    with:
+      c-compiler: clang
+      cpp-compiler: clang++
 
   cl:
-    runs-on: windows-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: Common build
-      uses: ./.github/workflows/common_cmake.yml
-      with:
-        c-compiler: cl
-        cpp-compiler: cl
-        os: windows-latest
-  
-  gcc-coverage:
-    runs-on: ubuntu-latest
-    if: ${{ github.ref_name == 'main' }}
-    steps:
-    - uses: actions/checkout@v4
-    - name: Common build
-      uses: ./.github/workflows/common_cmake.yml
-      with:
-        c-compiler: gcc
-        cpp-compiler: g++
-        build-type: Debug
-        cxx-test-flags: "--coverage"
-    - name: Create Coverage Badge
-      id: coverage
-      run: |
-        lcov --capture --directory . --output-file coverage.info
-        a_percentage=$(lcov --list coverage.info | grep -oP '^\s*\d+\.\d+%' | head -n 1)
-        echo "coverage-percent-value=${a_percentage}" >> "$GITHUB_OUTPUT"
+    uses: ./.github/workflows/common_cmake.yml
+    with:
+      c-compiler: cl
+      cpp-compiler: cl
+      os: windows-latest
+  # gcc-coverage:
+  #   runs-on: ubuntu-latest
+  #   if: ${{ github.ref_name == 'main' }}
+  #   steps:
+  #   - uses: actions/checkout@v4
+  #   - name: Common build
+  #     uses: ./.github/workflows/common_cmake.yml
+  #     with:
+  #       c-compiler: gcc
+  #       cpp-compiler: g++
+  #       build-type: Debug
+  #       cxx-test-flags: "--coverage"
+  #   - name: Create Coverage Badge
+  #     id: coverage
+  #     run: |
+  #       lcov --capture --directory . --output-file coverage.info
+  #       a_percentage=$(lcov --list coverage.info | grep -oP '^\s*\d+\.\d+%' | head -n 1)
+  #       echo "coverage-percent-value=${a_percentage}" >> "$GITHUB_OUTPUT"
 
-    - name: Build A Badge
-      uses: peterrhodesdev/build-a-badge@v1.3.1
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        filename: "badges/coverage-badge"
-        label: "Coverage"
-        message: "${{steps.coverage.outputs.coverage-percent-value}}"
+  #   - name: Build A Badge
+  #     uses: peterrhodesdev/build-a-badge@v1.3.1
+  #     with:
+  #       token: ${{ secrets.GITHUB_TOKEN }}
+  #       filename: "badges/coverage-badge"
+  #       label: "Coverage"
+  #       message: "${{steps.coverage.outputs.coverage-percent-value}}"
 
         
     
