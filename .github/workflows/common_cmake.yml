@@ -39,6 +39,12 @@ on:
       artifacts-name:
         type: string
         default: ""
+      cmake-arguments:
+        type: string
+        default: ""
+      cmake-test-arguments:
+        type: string
+        default: ""
 jobs:
   build:
     runs-on: ${{ inputs.os }}
@@ -58,21 +64,23 @@ jobs:
       if: ${{ inputs.c-flags != '' || inputs.cxx-flags != '' }}
       run: >
         cmake -B ${{ steps.strings.outputs.build-output-dir }}
-        -DCMAKE_CXX_COMPILER=${{ inputs.cpp-compiler }}
         -DCMAKE_C_COMPILER=${{ inputs.c-compiler }}
+        -DCMAKE_CXX_COMPILER=${{ inputs.cpp-compiler }}
         -DCMAKE_BUILD_TYPE=${{ inputs.build-type }}
         -DCMAKE_CXX_FLAGS=${{inputs.cxx-flags}}
         -DCMAKE_C_FLAGS=${{inputs.c-flags}}
         -S ${{ github.workspace }}
+        ${{ inputs.cmake-arguments }}
       
     - name: Configure CMake (without CXX and C flags)
       if: ${{ inputs.c-flags == '' && inputs.cxx-flags == '' }}
       run: >
         cmake -B ${{ steps.strings.outputs.build-output-dir }}
-        -DCMAKE_CXX_COMPILER=${{ inputs.cpp-compiler }}
         -DCMAKE_C_COMPILER=${{ inputs.c-compiler }}
+        -DCMAKE_CXX_COMPILER=${{ inputs.cpp-compiler }}
         -DCMAKE_BUILD_TYPE=${{ inputs.build-type }}
         -S ${{ github.workspace }}
+        ${{ inputs.cmake-arguments }}
 
     - name: Build
       # Does (mostly) nothing, required for install step 
@@ -97,6 +105,7 @@ jobs:
         -D CMAKE_CXX_COMPILER=${{ inputs.cpp-compiler }}
         -D CMAKE_C_FLAGS=${{inputs.c-test-flags}}
         -D CMAKE_CXX_FLAGS=${{inputs.cxx-test-flags}}
+        ${{ inputs.cmake-test-arguments }}
 
     - name: Test Configure (without CXX and C flags)
       if: ${{inputs.build-tests && (inputs.c-test-flags == '' && inputs.cxx-test-flags == '')}}
@@ -108,6 +117,7 @@ jobs:
         -D CMAKE_PREFIX_PATH=${{ steps.strings.outputs.install-dir }}
         -D CMAKE_C_COMPILER=${{ inputs.c-compiler }}
         -D CMAKE_CXX_COMPILER=${{ inputs.cpp-compiler }}
+        ${{ inputs.cmake-test-arguments }}
 
     - name: Build Tests
       if: ${{inputs.build-tests}}

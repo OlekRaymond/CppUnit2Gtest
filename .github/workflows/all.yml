@@ -25,7 +25,8 @@ jobs:
       c-compiler: gcc
       cpp-compiler: g++
       build-type: Debug
-      cxx-test-flags: "--coverage"
+      cmake-test-arguments: |
+        -D BuildWithCoverage=ON
       artifacts-path: |
         **/*.gcda
         **/*.gcno
@@ -49,19 +50,20 @@ jobs:
         run: sudo apt-get install lcov -y
 
       - name: Generate coverage.info
-        run: lcov --capture --directory . --output-file coverage.info
+        run: lcov --capture --directory . --output-file coverage.info --ignore-errors mismatch,gcov,gcov,source
 
       - name: Get coverage percentage
         id: coverage
         run: |
           percent=$(lcov --list coverage.info | grep -oP '^\s*\d+\.\d+%' | head -n 1 | tr -d ' %')
+          echo $percent
           echo "coverage-percent-value=${percent}" >> "$GITHUB_OUTPUT"
 
       - name: Build Coverage Badge
         uses: peterrhodesdev/build-a-badge@v1.3.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          filename: "badges/coverage-badge"
+          filename: "coverage-badge-data"
           label: "Coverage"
           message: "${{steps.coverage.outputs.coverage-percent-value}}"
 
