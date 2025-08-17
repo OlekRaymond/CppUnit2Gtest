@@ -54,8 +54,8 @@ jobs:
         echo "install-dir=${{ github.workspace }}/installed" >> "$GITHUB_OUTPUT"
         echo "build-test-dir=${{ github.workspace }}/build_test" >> "$GITHUB_OUTPUT"
 
-    - name: Configure CMake
-      # Configure CMake in a 'build' subdirectory.
+    - name: Configure CMake (with CXX and C flags)
+      if: ${{ inputs.c-flags != '' || inputs.cxx-flags != '' }}
       run: >
         cmake -B ${{ steps.strings.outputs.build-output-dir }}
         -DCMAKE_CXX_COMPILER=${{ inputs.cpp-compiler }}
@@ -65,6 +65,15 @@ jobs:
         -DCMAKE_C_FLAGS=${{inputs.c-flags}}
         -S ${{ github.workspace }}
       
+    - name: Configure CMake (without CXX and C flags)
+      if: ${{ inputs.c-flags == '' && inputs.cxx-flags == '' }}
+      run: >
+        cmake -B ${{ steps.strings.outputs.build-output-dir }}
+        -DCMAKE_CXX_COMPILER=${{ inputs.cpp-compiler }}
+        -DCMAKE_C_COMPILER=${{ inputs.c-compiler }}
+        -DCMAKE_BUILD_TYPE=${{ inputs.build-type }}
+        -S ${{ github.workspace }}
+
     - name: Build
       # Does (mostly) nothing, required for install step 
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ inputs.build-type }}
@@ -76,8 +85,8 @@ jobs:
         --config ${{ inputs.build-type }}
         --prefix ${{ steps.strings.outputs.install-dir }}
 
-    - name: Test Configure
-      if: ${{inputs.build-tests}}
+    - name: Test Configure (with CXX and C flags)
+      if: ${{inputs.build-tests &&  (inputs.c-test-flags != '' || inputs.cxx-test-flags != '')}}
       run: >
         cmake -B ${{ steps.strings.outputs.build-test-dir }}
         -S ${{ github.workspace }}/tests 
@@ -88,6 +97,17 @@ jobs:
         -D CMAKE_CXX_COMPILER=${{ inputs.cpp-compiler }}
         -D CMAKE_C_FLAGS=${{inputs.c-test-flags}}
         -D CMAKE_CXX_FLAGS=${{inputs.cxx-test-flags}}
+
+    - name: Test Configure (without CXX and C flags)
+      if: ${{inputs.build-tests && (inputs.c-test-flags == '' && inputs.cxx-test-flags == '')}}
+      run: >
+        cmake -B ${{ steps.strings.outputs.build-test-dir }}
+        -S ${{ github.workspace }}/tests 
+        -D BuildExamples=ON
+        -D BuildInternalTests=ON
+        -D CMAKE_PREFIX_PATH=${{ steps.strings.outputs.install-dir }}
+        -D CMAKE_C_COMPILER=${{ inputs.c-compiler }}
+        -D CMAKE_CXX_COMPILER=${{ inputs.cpp-compiler }}
 
     - name: Build Tests
       if: ${{inputs.build-tests}}
