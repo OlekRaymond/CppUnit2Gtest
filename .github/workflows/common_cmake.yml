@@ -1,0 +1,159 @@
+name: Common CMake building and testing script
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        type: string
+        default: ubuntu-latest
+      c-compiler:
+        type: string
+        required: true
+      cpp-compiler:
+        type: string
+        required: true
+      build-type:
+        type: string
+        default: Release
+      build-tests:
+        type: boolean
+        default: true
+      run-tests:
+        type: boolean
+        default: true
+      cmake-arguments:
+        type: string
+        default: ""
+      cmake-test-arguments:
+        type: string
+        default: ""
+      coverage:
+        type: boolean
+        default: false
+jobs:
+  build:
+    runs-on: ${{ inputs.os }}
+    if: ${{ !inputs.coverage }}
+    steps:
+    - uses: actions/checkout@v4
+
+    - &SetupDirs name: Set reusable strings
+      # Turn repeated input strings (such as the build output directory) into step outputs.
+      id: strings
+      shell: bash
+      run: |
+        echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+        echo "install-dir=${{ github.workspace }}/installed" >> "$GITHUB_OUTPUT"
+        echo "build-test-dir=${{ github.workspace }}/build_test" >> "$GITHUB_OUTPUT"
+
+    - &Config name: Configure CMake
+      run: >
+        cmake -B ${{ steps.strings.outputs.build-output-dir }}
+        -DCMAKE_C_COMPILER=${{ inputs.c-compiler }}
+        -DCMAKE_CXX_COMPILER=${{ inputs.cpp-compiler }}
+        -DCMAKE_BUILD_TYPE=${{ inputs.build-type }}
+        -S ${{ github.workspace }}
+        ${{ inputs.cmake-arguments }}
+
+    - &BuildCode name: Build
+      # Does (mostly) nothing, required for install step 
+      run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ inputs.build-type }}
+
+    - &InstallCode name: Install
+      # Install our cmake package
+      run: >
+        cmake --install ${{ steps.strings.outputs.build-output-dir }}
+        --config ${{ inputs.build-type }}
+        --prefix ${{ steps.strings.outputs.install-dir }}
+
+    - &ConfigTests name: Test Configure
+      run: >
+        cmake -B ${{ steps.strings.outputs.build-test-dir }}
+        -S ${{ github.workspace }}/tests 
+        -D BuildExamples=ON
+        -D BuildInternalTests=ON
+        -D CMAKE_PREFIX_PATH=${{ steps.strings.outputs.install-dir }}
+        -D CMAKE_C_COMPILER=${{ inputs.c-compiler }}
+        -D CMAKE_CXX_COMPILER=${{ inputs.cpp-compiler }}
+        ${{ inputs.cmake-test-arguments }}
+
+    - &BuildTests name: Build Tests
+      id: build-tests
+      if: ${{inputs.build-tests}}
+      run: >
+        cmake --build ${{ steps.strings.outputs.build-test-dir }}
+        --config ${{ inputs.build-type }}
+
+    - name: Run Tests
+      id: run-tests
+      if: ${{steps.build-tests.outcome == 'success' && inputs.run-tests}}
+      working-directory: ${{ steps.strings.outputs.build-test-dir }}
+      # Execute tests. Note that --build-config is needed (see build)
+      run: |
+        ctest --build-config ${{ inputs.build-type }} --output-on-failure
+  
+  # Coverage
+  #  Needs to be a separate job, as we run the tests differently
+  coverage:
+    runs-on: ${{ inputs.os }}
+    if: ${{ inputs.coverage }}
+    steps:
+    - uses: actions/checkout@v4
+    - &NoInstallSetup name: Set reusable strings
+      # Turn repeated input strings (such as the build output directory) into step outputs.
+      id: strings
+      shell: bash
+      run: |
+        echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+        echo "build-test-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+
+    - &NoInstallCMake name: Setup CMake
+      run: >
+        cmake -B ${{ steps.strings.outputs.build-test-dir }}
+        -DCMAKE_C_COMPILER=${{ inputs.c-compiler }}
+        -DCMAKE_CXX_COMPILER=${{ inputs.cpp-compiler }}
+        -DCMAKE_BUILD_TYPE=${{ inputs.build-type }}
+        -S ${{ github.workspace }}/tests
+        -D build_testing=ON
+        -D BuildExamples=ON
+        -D BuildInternalTests=ON
+        -D CMAKE_PREFIX_PATH=${{ steps.strings.outputs.install-dir }}
+        ${{ inputs.cmake-test-arguments }}
+
+    - name: Build
+      # Does (mostly) nothing, required for install step 
+      run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ inputs.build-type }}
+
+    - name: Run Tests
+      id: run-tests
+      if: ${{ inputs.run-tests}}
+      working-directory: ${{ steps.strings.outputs.build-test-dir }}
+      # Execute tests. Note that --build-config is needed (see build)
+      run: |
+        ctest --build-config ${{ inputs.build-type }} --output-on-failure
+    - name: Coverage Reporting
+      # Only run coverage if gcc is used and build type is Debug (for less inlineing)
+      if: ${{ steps.run-tests.outcome == 'success' && inputs.c-compiler == 'gcc' && inputs.build-type == 'Debug' && inputs.coverage }}
+      id: coverage
+      # Install gcovr
+      # Get coverage in normal format and print
+      # Get coverage as single percentage
+      # Write it to output for use later
+      run: |
+       ls -R ${{ steps.strings.outputs.build-test-dir }} | grep -P ".(gcda|gcno)"
+       sudo apt-get install gcovr -y
+       gcovr -r ${{ steps.strings.outputs.build-test-dir }} -f 'CppUnit*' -s -o coverage.txt
+       percent=$(cat coverage.txt | grep TOTAL | grep -oP '\d+\d+%')
+       echo "coverage-percent-value=$percent" >> "$GITHUB_OUTPUT"
+
+    - name: Build Coverage Badge
+      if: ${{ steps.coverage.outcome == 'success' && (github.ref_name == 'main' || github.ref_name == '15-automate-code-coverage-badge') }}
+      uses: peterrhodesdev/build-a-badge@v1.3.1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        filename: "coverage-badge-data"
+        label: "Coverage"
+        namedLogo: 'github'
+        color: "brightgreen"
+        message: "${{steps.coverage.outputs.coverage-percent-value}}"
+        

@@ -36,7 +36,14 @@ endif()
 include(GetGtest.cmake)
 add_executable(${PROJECT_NAME} ${CppUnitFiles})
 target_link_libraries(${PROJECT_NAME} PRIVATE GTest::GTest GTest::Main)
-
+if (BuildWithCoverage)
+    if (MSVC)
+        message(FATAL_ERROR "Cannot build with coverage on MSVC, please use GCC")
+    else()
+        target_compile_options(${PROJECT_NAME} PRIVATE --coverage)
+        target_link_options(${PROJECT_NAME} PRIVATE --coverage)
+    endif()
+endif()
 if (NOT build_testing)
     message(STATUS "Building tests as if external user by using find_package calls")
     find_package(CppUnit2Gtest REQUIRED)
@@ -46,17 +53,19 @@ else()
 
     # Create links to our main file so they can be used by cppunit style imports
     include(CreateSymlink.cmake)
-    set(SOURCE_FILE "${CMAKE_CURRENT_LIST_DIR}/../CppUnit2Gtest.hpp")
+    set(SOURCE_FILE "../CppUnit2Gtest.hpp")
 
-    # Allow using files that cppunit has, old style ifdef guards avoid issues with multiple defines
-    create_file_link("${SOURCE_FILE}" "${CMAKE_CURRENT_LIST_DIR}/cppunit/portability/Stream.h")
-    create_file_link("${SOURCE_FILE}" "${CMAKE_CURRENT_LIST_DIR}/cppunit/extensions/HelperMacros.h")
-    create_file_link("${SOURCE_FILE}" "${CMAKE_CURRENT_LIST_DIR}/cppunit/config/SourcePrefix.h")
+    # Allow including files that cppunit has
+    create_header_alias("${SOURCE_FILE}" "${CMAKE_CURRENT_LIST_DIR}/cppunit/extensions/HelperMacros.h")
+    create_header_alias("${SOURCE_FILE}" "${CMAKE_CURRENT_LIST_DIR}/cppunit/config/SourcePrefix.h")
+    create_header_alias("${SOURCE_FILE}" "${CMAKE_CURRENT_LIST_DIR}/cppunit/portability/Stream.h")
+    
     # Add headers for IDEs
     list(APPEND CppUnitFiles
         "cppunit/extensions/HelperMacros.h"
         "cppunit/portability/Stream.h"
         "cppunit/config/SourcePrefix.h"
+        "${SOURCE_FILE}"
     )
 endif()
 

@@ -1,5 +1,5 @@
 [![BuildAndTest](https://github.com/OlekRaymond/CppUnit2Gtest/actions/workflows/cmake-all-tests.yml/badge.svg)](https://github.com/OlekRaymond/CppUnit2Gtest/actions/workflows/cmake-all-tests.yml)
-![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)
+[![](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/wiki/OlekRaymond/CppUnit2Gtest/coverage-badge-data.md)](https://github.com/OlekRaymond/CppUnit2Gtest/actions/workflows/all.yml)
 ![Mutation Testing](https://img.shields.io/badge/mutation%20testing-94%25%20killed-brightgreen)
 
 # CppUnit to Gtest
@@ -16,7 +16,7 @@ We provide a CMake package that shadows CppUnit's CMake package for seamless int
 2. `cmake --build build`
 3. `cmake --install build`
 
-+**Usage in your project:**
+**Usage in your project:**
 ```cmake
 find_package(CppUnit2Gtest REQUIRED)
 target_link_libraries(${PROJECT_NAME} PRIVATE CppUnit2Gtest::CppUnit2Gtest)

@@ -70,11 +70,11 @@ include(GNUInstallDirs)
 # allow usage of headers as if it was cppunit
 install(CODE "
 set(INSTALL_INCLUDE_DIR \${CMAKE_INSTALL_PREFIX}/include)
-set(SOURCE_FILE \${INSTALL_INCLUDE_DIR}/CppUnit2Gtest.hpp)
+set(SOURCE_FILE CppUnit2Gtest.hpp)
 include(tests/CreateSymlink.cmake)
-create_file_link(\${SOURCE_FILE} \${INSTALL_INCLUDE_DIR}/cppunit/portability/Stream.h)
-create_file_link(\${SOURCE_FILE} \${INSTALL_INCLUDE_DIR}/cppunit/extensions/HelperMacros.h)
-create_file_link(\${SOURCE_FILE} \${INSTALL_INCLUDE_DIR}/cppunit/config/SourcePrefix.h)
+create_header_alias(\${SOURCE_FILE} \${INSTALL_INCLUDE_DIR}/cppunit/portability/Stream.h)
+create_header_alias(\${SOURCE_FILE} \${INSTALL_INCLUDE_DIR}/cppunit/extensions/HelperMacros.h)
+create_header_alias(\${SOURCE_FILE} \${INSTALL_INCLUDE_DIR}/cppunit/config/SourcePrefix.h)
 ")
 
 # We don't install GTest so the user can have any they would like and/or install it later
