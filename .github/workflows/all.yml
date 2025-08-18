@@ -46,19 +46,14 @@ jobs:
         with:
           name: coverage-files
 
-      - name: Install lcov
-        run: sudo apt-get install lcov -y
+      - name: Update apt and Install gcovr
+        run: sudo apt update && sudo apt upgrade -y && sudo apt-get install gcovr -y
 
       - name: Generate coverage.info
-        run: lcov --capture --directory . --output-file coverage.info --ignore-errors mismatch,gcov,gcov,source
-
-      - name: Get coverage percentage
         id: coverage
         run: |
-          percent=$(lcov --list coverage.info | grep -oP '^\s*\d+\.\d+%' | head -n 1 | tr -d ' %')
-          echo $percent
-          echo "coverage-percent-value=${percent}" >> "$GITHUB_OUTPUT"
-
+          percent=$(gcovr -r . -f 'CppUnit*' | grep TOTAL | grep -oP '\d+\d+%')
+          echo "coverage-percent-value=$percent" >> "$GITHUB_OUTPUT"
       - name: Build Coverage Badge
         uses: peterrhodesdev/build-a-badge@v1.3.1
         with:

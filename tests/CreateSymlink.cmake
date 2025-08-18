@@ -22,3 +22,8 @@ function(create_file_link source_file target_file)
         message(STATUS "Made link/file ${target_file}")
     endif()
 endfunction()
+
+function(create_header_alias source_file target_file)
+    # Write an include to the target file
+    file(WRITE "${target_file}" "#include \"${source_file}\"\n")
+endfunction()
