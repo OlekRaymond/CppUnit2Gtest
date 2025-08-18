@@ -27,39 +27,7 @@ jobs:
       build-type: Debug
       cmake-test-arguments: |
         -D BuildWithCoverage=ON
-      artifacts-path: |
-        **/*.gcda
-        **/*.gcno
-      artifacts-name: coverage-files
+      coverage: true
     secrets: inherit
-
-  create-coverage-badge:
-    runs-on: ubuntu-latest
-    needs: [gcc-coverage]
-    if: ${{ github.ref_name == 'main' || github.ref_name == '15-automate-code-coverage-badge' }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Download coverage artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: coverage-files
-
-      - name: Update apt and Install gcovr
-        run: sudo apt update && sudo apt upgrade -y && sudo apt-get install gcovr -y
-
-      - name: Generate coverage.info
-        id: coverage
-        run: |
-          percent=$(gcovr -r . -f 'CppUnit*' | grep TOTAL | grep -oP '\d+\d+%')
-          echo "coverage-percent-value=$percent" >> "$GITHUB_OUTPUT"
-      - name: Build Coverage Badge
-        uses: peterrhodesdev/build-a-badge@v1.3.1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          filename: "coverage-badge-data"
-          label: "Coverage"
-          message: "${{steps.coverage.outputs.coverage-percent-value}}"
 
 

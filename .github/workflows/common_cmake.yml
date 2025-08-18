@@ -15,43 +15,28 @@ on:
       build-type:
         type: string
         default: Release
-      cxx-flags:
-        type: string
-        default: ""
-      c-flags:
-        type: string
-        default: ""
-      cxx-test-flags:
-        type: string
-        default: ""
-      c-test-flags:
-        type: string
-        default: ""
       build-tests:
         type: boolean
         default: true
       run-tests:
         type: boolean
         default: true
-      artifacts-path:
-        type: string
-        default: ""
-      artifacts-name:
-        type: string
-        default: ""
       cmake-arguments:
         type: string
         default: ""
       cmake-test-arguments:
         type: string
         default: ""
+      coverage:
+        type: boolean
+        default: false
 jobs:
   build:
     runs-on: ${{ inputs.os }}
     steps:
     - uses: actions/checkout@v4
 
-    - name: Set reusable strings
+    - &SetupDirs name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs.
       id: strings
       shell: bash
@@ -60,20 +45,7 @@ jobs:
         echo "install-dir=${{ github.workspace }}/installed" >> "$GITHUB_OUTPUT"
         echo "build-test-dir=${{ github.workspace }}/build_test" >> "$GITHUB_OUTPUT"
 
-    - name: Configure CMake (with CXX and C flags)
-      if: ${{ inputs.c-flags != '' || inputs.cxx-flags != '' }}
-      run: >
-        cmake -B ${{ steps.strings.outputs.build-output-dir }}
-        -DCMAKE_C_COMPILER=${{ inputs.c-compiler }}
-        -DCMAKE_CXX_COMPILER=${{ inputs.cpp-compiler }}
-        -DCMAKE_BUILD_TYPE=${{ inputs.build-type }}
-        -DCMAKE_CXX_FLAGS=${{inputs.cxx-flags}}
-        -DCMAKE_C_FLAGS=${{inputs.c-flags}}
-        -S ${{ github.workspace }}
-        ${{ inputs.cmake-arguments }}
-      
-    - name: Configure CMake (without CXX and C flags)
-      if: ${{ inputs.c-flags == '' && inputs.cxx-flags == '' }}
+    - &Config name: Configure CMake
       run: >
         cmake -B ${{ steps.strings.outputs.build-output-dir }}
         -DCMAKE_C_COMPILER=${{ inputs.c-compiler }}
@@ -82,33 +54,18 @@ jobs:
         -S ${{ github.workspace }}
         ${{ inputs.cmake-arguments }}
 
-    - name: Build
+    - &BuildCode name: Build
       # Does (mostly) nothing, required for install step 
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ inputs.build-type }}
 
-    - name: Install
+    - &InstallCode name: Install
       # Install our cmake package
       run: >
         cmake --install ${{ steps.strings.outputs.build-output-dir }}
         --config ${{ inputs.build-type }}
         --prefix ${{ steps.strings.outputs.install-dir }}
 
-    - name: Test Configure (with CXX and C flags)
-      if: ${{inputs.build-tests &&  (inputs.c-test-flags != '' || inputs.cxx-test-flags != '')}}
-      run: >
-        cmake -B ${{ steps.strings.outputs.build-test-dir }}
-        -S ${{ github.workspace }}/tests 
-        -D BuildExamples=ON
-        -D BuildInternalTests=ON
-        -D CMAKE_PREFIX_PATH=${{ steps.strings.outputs.install-dir }}
-        -D CMAKE_C_COMPILER=${{ inputs.c-compiler }}
-        -D CMAKE_CXX_COMPILER=${{ inputs.cpp-compiler }}
-        -D CMAKE_C_FLAGS=${{inputs.c-test-flags}}
-        -D CMAKE_CXX_FLAGS=${{inputs.cxx-test-flags}}
-        ${{ inputs.cmake-test-arguments }}
-
-    - name: Test Configure (without CXX and C flags)
-      if: ${{inputs.build-tests && (inputs.c-test-flags == '' && inputs.cxx-test-flags == '')}}
+    - &ConfigTests name: Test Configure
       run: >
         cmake -B ${{ steps.strings.outputs.build-test-dir }}
         -S ${{ github.workspace }}/tests 
@@ -119,23 +76,40 @@ jobs:
         -D CMAKE_CXX_COMPILER=${{ inputs.cpp-compiler }}
         ${{ inputs.cmake-test-arguments }}
 
-    - name: Build Tests
+    - &BuildTests name: Build Tests
+      id: build-tests
       if: ${{inputs.build-tests}}
       run: >
         cmake --build ${{ steps.strings.outputs.build-test-dir }}
         --config ${{ inputs.build-type }}
 
-    - name: Run Tests
-      if: ${{inputs.run-tests}}
+    - &RunTests name: Run Tests
+      id: run-tests
+      if: ${{steps.build-tests.outcome == 'success' && inputs.run-tests}}
       working-directory: ${{ steps.strings.outputs.build-test-dir }}
       # Execute tests. Note that --build-config is needed (see build)
       run: |
         ctest --build-config ${{ inputs.build-type }} --output-on-failure
 
-    - name: Upload Artifacts
-      if: ${{ inputs.artifacts-path != '' }}
-      uses: actions/upload-artifact@v4
+    - name: Coverage Reporting
+      # Only run coverage if gcc is used and build type is Debug (for less inlineing)
+      if: ${{ steps.run-tests.outcome == 'success' && inputs.c-compiler == 'gcc' && inputs.build-type == 'Debug' && inputs.coverage }}
+      id: coverage
+      # Install gcovr
+      # Get coverage in normal format and print
+      # Get coverage as single percentage
+      # Write it to output for use later
+      run: |
+       sudo apt-get install gcovr -y
+       gcovr -r . -f 'CppUnit*' -s -o coverage.txt
+       percent=$(cat coverage.txt | grep TOTAL | grep -oP '\d+\d+%')
+       echo "coverage-percent-value=$percent" >> "$GITHUB_OUTPUT"
+
+    - name: Build Coverage Badge
+      if: ${{ steps.coverage.outcome == 'success' && (github.ref_name == 'main' || github.ref_name == '15-automate-code-coverage-badge') }}
+      uses: peterrhodesdev/build-a-badge@v1.3.1
       with:
-        name: ${{ inputs.artifacts-name }}
-        path: ${{ inputs.artifacts-path }}
-        retention-days: 1 # 1 minute
+        token: ${{ secrets.GITHUB_TOKEN }}
+        filename: "coverage-badge-data"
+        label: "Coverage"
+        message: "${{steps.coverage.outputs.coverage-percent-value}}"
