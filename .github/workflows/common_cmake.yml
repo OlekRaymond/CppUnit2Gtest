@@ -33,6 +33,7 @@ on:
 jobs:
   build:
     runs-on: ${{ inputs.os }}
+    if: ${{ !inputs.coverage }}
     steps:
     - uses: actions/checkout@v4
 
@@ -83,14 +84,51 @@ jobs:
         cmake --build ${{ steps.strings.outputs.build-test-dir }}
         --config ${{ inputs.build-type }}
 
-    - &RunTests name: Run Tests
+    - name: Run Tests
       id: run-tests
       if: ${{steps.build-tests.outcome == 'success' && inputs.run-tests}}
       working-directory: ${{ steps.strings.outputs.build-test-dir }}
       # Execute tests. Note that --build-config is needed (see build)
       run: |
         ctest --build-config ${{ inputs.build-type }} --output-on-failure
+  
+  coverage:
+    runs-on: ${{ inputs.os }}
+    if: ${{ inputs.coverage }}
+    steps:
+    - uses: actions/checkout@v4
+    - &NoInstallSetup name: Set reusable strings
+      # Turn repeated input strings (such as the build output directory) into step outputs.
+      id: strings
+      shell: bash
+      run: |
+        echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+        echo "build-test-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
+    - &NoInstallCMake name: Setup CMake
+      run: >
+        cmake -B ${{ steps.strings.outputs.build-test-dir }}
+        -DCMAKE_C_COMPILER=${{ inputs.c-compiler }}
+        -DCMAKE_CXX_COMPILER=${{ inputs.cpp-compiler }}
+        -DCMAKE_BUILD_TYPE=${{ inputs.build-type }}
+        -S ${{ github.workspace }}/tests
+        -D build_testing=ON
+        -D BuildExamples=ON
+        -D BuildInternalTests=ON
+        -D CMAKE_PREFIX_PATH=${{ steps.strings.outputs.install-dir }}
+        ${{ inputs.cmake-test-arguments }}
+
+    - name: Build
+      # Does (mostly) nothing, required for install step 
+      run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ inputs.build-type }}
+
+    - name: Run Tests
+      id: run-tests
+      if: ${{ inputs.run-tests}}
+      working-directory: ${{ steps.strings.outputs.build-test-dir }}
+      # Execute tests. Note that --build-config is needed (see build)
+      run: |
+        ctest --build-config ${{ inputs.build-type }} --output-on-failure
     - name: Coverage Reporting
       # Only run coverage if gcc is used and build type is Debug (for less inlineing)
       if: ${{ steps.run-tests.outcome == 'success' && inputs.c-compiler == 'gcc' && inputs.build-type == 'Debug' && inputs.coverage }}
@@ -100,8 +138,9 @@ jobs:
       # Get coverage as single percentage
       # Write it to output for use later
       run: |
+       ls -R ${{ steps.strings.outputs.build-test-dir }} | grep -P ".(gcda|gcno)"
        sudo apt-get install gcovr -y
-       gcovr -r . -f 'CppUnit*' -s -o coverage.txt
+       gcovr -r ${{ steps.strings.outputs.build-test-dir }} -f 'CppUnit*' -v -s -o coverage.txt
        percent=$(cat coverage.txt | grep TOTAL | grep -oP '\d+\d+%')
        echo "coverage-percent-value=$percent" >> "$GITHUB_OUTPUT"
 

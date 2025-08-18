@@ -27,6 +27,8 @@ jobs:
       build-type: Debug
       cmake-test-arguments: |
         -D BuildWithCoverage=ON
+      cmake-arguments: |
+        -D BuildWithCoverage=ON
       coverage: true
     secrets: inherit
 
