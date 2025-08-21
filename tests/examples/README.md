@@ -6,7 +6,7 @@ The migration examples demonstrate how to incrementally transition from CppUnit 
 
 ## Migration Philosophy
 
-All migration approaches are designed to be **incremental**, allowing you to maintain **mixed codebases** with both Google Test and CppUnit-style tests running side by side. This means you can migrate your test suite gradually without breaking existing functionality.
+All migration approaches are designed to be **incremental**, allowing you to maintain codebases with **both Google Test and CppUnit-style** tests running **side by side**. This means you can migrate your test suite **gradually** without breaking existing functionality.
 
 ## Migration Examples
 
@@ -20,9 +20,9 @@ Shows the migration pattern for tests that don't share state between test cases:
 
 ### 2. [MigratingSharedState.cpp](MigratingSharedState.cpp)
 Unfortunately, this example is needed because tests that share expensive resources require more complex handling due to fundamental differences in how CppUnit and Google Test manage test lifecycle:
-- Database connections, file handles, or other costly setup operations
+- Database connections, or other costly setup operations
 - Demonstrates proper use of `SetUpTestSuite()` and `TearDownTestSuite()`
-- Shows how to handle the fundamental difference in constructor behavior
+- Shows code changes required to handle the difference in constructor behavior
 
 **Best for**: Integration tests or tests with expensive setup/teardown operations.
 

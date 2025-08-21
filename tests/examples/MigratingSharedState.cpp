@@ -162,5 +162,3 @@ TEST_F(DatabaseTestCppUnit2GtestFixture, TestCommand2) {
 }
 
 }
-
-

@@ -147,7 +147,7 @@ jobs:
        echo "coverage-percent-value=$percent" >> "$GITHUB_OUTPUT"
 
     - name: Build Coverage Badge
-      if: ${{ steps.coverage.outcome == 'success' && (github.ref_name == 'main' || github.ref_name == '15-automate-code-coverage-badge') }}
+      if: ${{ steps.coverage.outcome == 'success' && github.ref_name == 'main' }}
       uses: peterrhodesdev/build-a-badge@v1.3.1
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
