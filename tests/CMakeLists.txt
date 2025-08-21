@@ -21,6 +21,8 @@ if (BuildExamples)
         "examples/Money.cpp"
         "examples/Simple.cpp"
         "examples/Hierarchy.cpp"
+        "examples/Migrating.cpp"
+        "examples/MigratingSharedState.cpp"
     )
 endif()
 if (BuildInternalTests)
