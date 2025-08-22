@@ -1,4 +1,4 @@
-[![BuildAndTest](https://github.com/OlekRaymond/CppUnit2Gtest/actions/workflows/cmake-all-tests.yml/badge.svg)](https://github.com/OlekRaymond/CppUnit2Gtest/actions/workflows/cmake-all-tests.yml)
+[![CI](https://github.com/OlekRaymond/CppUnit2Gtest/actions/workflows/all.yml/badge.svg)](https://github.com/OlekRaymond/CppUnit2Gtest/actions/workflows/all.yml)
 [![](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/wiki/OlekRaymond/CppUnit2Gtest/coverage-badge-data.md)](https://github.com/OlekRaymond/CppUnit2Gtest/actions/workflows/all.yml)
 ![Mutation Testing](https://img.shields.io/badge/mutation%20testing-94%25%20killed-brightgreen)
 
@@ -77,9 +77,11 @@ in leak sanitizers. While workarounds exist, managing extensive blacklists for m
 
 For large codebases, this adapter provides a migration path that allows you to:
 
-- Maintain existing CppUnit tests while gradually migrating to Google Test
+- Maintain existing CppUnit tests while **gradually** migrating to Google Test
 - Validate that migrated tests produce identical results
 - Avoid the risk and cost of rewriting large test suites all at once
+
+More information on migrating can be found in the [examples](tests/examples/README.md) folder.
 
 For automated migration, consider writing a Python script to handle mechanical transformations.
 
