@@ -46,10 +46,10 @@ class DatabaseTestCppUnit : public CppUnit::TestCase {
     CPPUNIT_TEST_SUITE_END();
 public:
     Database database;
-	// In CppUnit the constructor is only called once
-	//  When using CppUnit2Gtest it is called multiple times
+	// In both CppUnit and Gtest constructors are called once per test 
 	DatabaseTestCppUnit() : database{} { }	
 	
+    // Set up and tear down methods are also called before and after each test
     void tearDown() override {
         // tearDown method is the same as CppUnit
         //  (runs after every test)
@@ -104,7 +104,7 @@ class DatabaseTestCppUnit2Gtest : public CppUnit::TestCase {
 
     static void SetUpTestSuite() {
         // Call the google test function that runs once 
-        //  before the suite instead
+        //  before the suite instead of doing it every time
         expensive_operatations = 0;
         database = new Database{};
         // Note it should not interact with members in this class
