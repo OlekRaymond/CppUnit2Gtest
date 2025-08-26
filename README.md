@@ -1,6 +1,6 @@
-[![CI](https://github.com/OlekRaymond/CppUnit2Gtest/actions/workflows/all.yml/badge.svg)](https://github.com/OlekRaymond/CppUnit2Gtest/actions/workflows/all.yml)
-[![](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/wiki/OlekRaymond/CppUnit2Gtest/coverage-badge-data.md)](https://github.com/OlekRaymond/CppUnit2Gtest/actions/workflows/all.yml)
-![Mutation Testing](https://img.shields.io/badge/mutation%20testing-94%25%20killed-brightgreen)
+[![CI](https://github.com/OlekRaymond/CppUnit2Gtest/actions/workflows/CI.yml/badge.svg)](https://github.com/OlekRaymond/CppUnit2Gtest/actions/workflows/CI.yml)
+[![Test Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/wiki/OlekRaymond/CppUnit2Gtest/coverage-badge-data.md)](https://github.com/OlekRaymond/CppUnit2Gtest/actions/workflows/CI.yml)
+[![Mutation Testing](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/wiki/OlekRaymond/CppUnit2Gtest/mutation-badge-data.md)](https://mull.readthedocs.io/en/0.26.0/MutationTestingIntro.html)
 
 # CppUnit to Gtest
 

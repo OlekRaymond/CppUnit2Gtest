@@ -72,10 +72,9 @@ public:
 
     // For demonstation purposes only:
     static void TearDownTestSuite() {
-        // Expecting 2, one for each test.
-        std::cout << "DatabaseTestCppUnit completed " 
-            << expensive_operatations << " expensive operations\n";
-        expensive_operatations = 0;
+        ASSERT_EQ(expensive_operatations, 2); // one for each test.
+        std::cout << "DatabaseTestCppUnit completed 2 expensive operations\n"
+            << "  (constructor is called once for each test)\n";
     }
 };
 
@@ -112,9 +111,9 @@ class DatabaseTestCppUnit2Gtest : public CppUnit::TestCase {
 	
     static void TearDownTestSuite() {
         delete database;
-        std::cout << "DatabaseTestCppUnit2Gtest completed " 
-            << expensive_operatations << " expensive operations\n";
-        expensive_operatations = 0;
+        ASSERT_EQ(expensive_operatations, 1); // one for the entire suite
+        std::cout << "DatabaseTestCppUnit2Gtest completed 1 expensive operation\n"
+                  << "  (constructor is called once for the entire suite)\n";
     }
 
     void tearDown() override { DatabaseTestCppUnit2Gtest::database->DeleteData(); }
