@@ -29,13 +29,14 @@ jobs:
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
         echo "install-dir=${{ github.workspace }}/installed" >> "$GITHUB_OUTPUT"
         echo "build-test-dir=${{ github.workspace }}/build_test" >> "$GITHUB_OUTPUT"
-        echo "cmake_args=-DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=${{ matrix.cpp-compiler }} -DCMAKE_C_COMPILER=${{ matrix.c-compiler }} " >> "$GITHUB_OUTPUT"
+        echo "cmake_args=-DCMAKE_CXX_COMPILER=${{ matrix.cpp-compiler }} -DCMAKE_C_COMPILER=${{ matrix.c-compiler }} " >> "$GITHUB_OUTPUT"
 
     - &config 
       name: Configure CMake
       run: >
         cmake -B build
         -S ${{ github.workspace }}
+        -DCMAKE_BUILD_TYPE=Release
         ${{ steps.strings.outputs.cmake_args }}
 
     - &build-code
@@ -56,6 +57,7 @@ jobs:
       run: >
         cmake -B build_test
         -S ./tests 
+        -DCMAKE_BUILD_TYPE=Release
         ${{ steps.strings.outputs.cmake_args }}
         -D BuildExamples=ON
         -D BuildInternalTests=ON
@@ -98,12 +100,13 @@ jobs:
         -D BuildExamples=ON
         -D BuildInternalTests=ON
         -D BuildWithCoverage=ON
+        -DCMAKE_BUILD_TYPE=Debug
     - *build-code
     - name: Run Tests with Coverage
       id: run-tests
       working-directory: ${{ steps.strings.outputs.build-output-dir }}  
       run: |
-        ctest --build-config Release --output-on-failure
+        ctest --build-config Debug --output-on-failure
     - name: Coverage Reporting
       # Only run coverage if gcc is used and build type is Debug (for less inlineing)
       id: coverage
@@ -128,5 +131,53 @@ jobs:
         namedLogo: 'github'
         color: "brightgreen"
         message: "${{steps.coverage.outputs.coverage-percent-value}}"
-        
+  
+  mutation-testing:
+    strategy:
+      matrix:
+        include:
+          # must be a fixed version of clang for mull to work
+        - c-compiler: clang-18
+          cpp-compiler: clang++-18
+          os: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v4
+    - *setup-dirs
+    - name: Install Mull
+      run: |
+        curl -1sLf 'https://dl.cloudsmith.io/public/mull-project/mull-stable/setup.deb.sh' | sudo -E bash
+        sudo apt-get install mull-18
+        mull-runner-18 --version
+    - &config-mutation
+      name: Configure CMake with Mutation Testing
+      # O0 is on for debug anyway.
+      run: >
+        cmake -B ${{ steps.strings.outputs.build-output-dir }}
+        -S ${{ github.workspace }}
+        ${{ steps.strings.outputs.cmake_args }}
+        -D build_testing=ON
+        -D BuildExamples=ON
+        -D BuildInternalTests=ON
+        -DCMAKE_BUILD_TYPE=Debug
+        -DCMAKE_CXX_FLAGS="-O0 -fpass-plugin=/usr/lib/mull-ir-frontend-18 -g -grecord-command-line"
+    - *build-code
+    - &run-mutation-tests
+      name: Run Mutation Tests
+      id: mutation-tests  
+      run: |
+        mull-runner-18 --workers=6 ./build/tests/CppUnit2Gtest_AllTests | tee mutation_report.txt
+        percent=$(cat mutation_report.txt | grep "Mutation score: " | grep -oP '\d+%')
+        echo "mutation-percent-value=$percent" >> "$GITHUB_OUTPUT"
+    - &mutation-badge
+      name: Build Mutation Testing Badge
+      if: ${{ github.ref_name == 'main' }}
+      uses: peterrhodesdev/build-a-badge@v1.3.1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        filename: "mutation-badge-data"
+        label: "Mutation Test Score"
+        namedLogo: 'github'
+        color: "brightgreen"
+        message: "${{steps.mutation-tests.outputs.mutation-percent-value}}"
 
