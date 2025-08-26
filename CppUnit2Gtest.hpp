@@ -116,7 +116,7 @@ namespace to { namespace gtest {
                  [testMethod]() -> DynamicTest<TestSuite>* { return new DynamicTest<TestSuite>(testMethod); }
              );
         }
-        return __LINE__ + line_number + testSuiteData.size();
+        return testSuiteData.size();
     }
 
     /// Register required tests from a suite 
@@ -127,8 +127,7 @@ namespace to { namespace gtest {
 
         InternalRegisterTestsVector(tests, file_name, line_number, fixtureName);
         // return an int so we can call this statically a bit easier
-        return __LINE__ + line_number + tests.size();
-        //  (Use something that can change to avoid people doing asserts on it)
+        return tests.size();
     }
 
 #undef CppUnit2Gtest_CHECK

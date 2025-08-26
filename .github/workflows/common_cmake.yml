@@ -131,29 +131,4 @@ jobs:
       # Execute tests. Note that --build-config is needed (see build)
       run: |
         ctest --build-config ${{ inputs.build-type }} --output-on-failure
-    - name: Coverage Reporting
-      # Only run coverage if gcc is used and build type is Debug (for less inlineing)
-      if: ${{ steps.run-tests.outcome == 'success' && inputs.c-compiler == 'gcc' && inputs.build-type == 'Debug' && inputs.coverage }}
-      id: coverage
-      # Install gcovr
-      # Get coverage in normal format and print
-      # Get coverage as single percentage
-      # Write it to output for use later
-      run: |
-       ls -R ${{ steps.strings.outputs.build-test-dir }} | grep -P ".(gcda|gcno)"
-       sudo apt-get install gcovr -y
-       gcovr -r ${{ steps.strings.outputs.build-test-dir }} -f 'CppUnit*' -s -o coverage.txt
-       percent=$(cat coverage.txt | grep TOTAL | grep -oP '\d+\d+%')
-       echo "coverage-percent-value=$percent" >> "$GITHUB_OUTPUT"
-
-    - name: Build Coverage Badge
-      if: ${{ steps.coverage.outcome == 'success' && github.ref_name == 'main' }}
-      uses: peterrhodesdev/build-a-badge@v1.3.1
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        filename: "coverage-badge-data"
-        label: "Coverage"
-        namedLogo: 'github'
-        color: "brightgreen"
-        message: "${{steps.coverage.outputs.coverage-percent-value}}"
-        
+   

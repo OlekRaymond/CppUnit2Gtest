@@ -9,3 +9,6 @@ ignoreMutators:
 excludePaths:
   - gtest
   - gmock
+  # Most tests are left in because the code is mostly macros and the mutations in them are useful
+  #  These however contain code that doesn't do anything so those mutations are not useful
+  - tests/examples/MigratingSharedState.cpp

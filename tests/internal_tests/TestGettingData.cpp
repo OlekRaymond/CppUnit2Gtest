@@ -68,8 +68,8 @@ namespace {
     }
 
     TEST(TestGettingData, RegisterMonkey) {
-        ::CppUnit::to::gtest::InternalRegisterTests<MonkeyTest>( "", 0, "");
-        // Assert No throw
+        auto added = ::CppUnit::to::gtest::InternalRegisterTests<MonkeyTest>( "", 0, "");
+        // Assert that test was added
+        ASSERT_EQ(added, 1); 
     }
 }
-

@@ -1,35 +1,132 @@
 on: push
+
 jobs:
-  gcc:
-    uses: ./.github/workflows/common_cmake.yml
-    with:
-      c-compiler: gcc
-      cpp-compiler: g++
+  ReleaseBuilds:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        c-compiler: [gcc, clang]
+        include:
+          - c-compiler: gcc
+            cpp-compiler: g++
+          - c-compiler: clang
+            cpp-compiler: clang++
+          - c-compiler: cl
+            cpp-compiler: cl
+            os: windows-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v4
 
-  clang:
-    uses: ./.github/workflows/common_cmake.yml
-    with:
-      c-compiler: clang
-      cpp-compiler: clang++
+    - &setup-dirs
+      name: Set reusable strings
+      shell: bash
+      # Turn repeated input strings (such as the build output directory) into step outputs.
+      id: strings
+      # absolute paths do not work on Windows runners so these are rarely used
+      #  (\ is not escaped so bad stuff happens)
+      run: |
+        echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+        echo "install-dir=${{ github.workspace }}/installed" >> "$GITHUB_OUTPUT"
+        echo "build-test-dir=${{ github.workspace }}/build_test" >> "$GITHUB_OUTPUT"
+        echo "cmake_args=-DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=${{ matrix.cpp-compiler }} -DCMAKE_C_COMPILER=${{ matrix.c-compiler }} " >> "$GITHUB_OUTPUT"
 
-  cl:
-    uses: ./.github/workflows/common_cmake.yml
-    with:
-      c-compiler: cl
-      cpp-compiler: cl
-      os: windows-latest
+    - &config 
+      name: Configure CMake
+      run: >
+        cmake -B build
+        -S ${{ github.workspace }}
+        ${{ steps.strings.outputs.cmake_args }}
+
+    - &build-code
+      name: Build
+      # Does (mostly) nothing, required for install step 
+      run: cmake --build build --config Release
+
+    - &install-code
+      name: Install
+      # Install our cmake package
+      run: >
+        cmake --install build
+        --config Release
+        --prefix ${{ github.workspace }}/installed
+
+    - &config-tests 
+      name: Test Configure
+      run: >
+        cmake -B build_test
+        -S ./tests 
+        ${{ steps.strings.outputs.cmake_args }}
+        -D BuildExamples=ON
+        -D BuildInternalTests=ON
+        -D CMAKE_PREFIX_PATH=${{ github.workspace }}/installed
+        
+    - &build-tests
+      name: Build Tests
+      id: build-tests
+      run: >
+        cmake --build build_test --config Release
+
+    - &run-tests
+      name: Run Tests
+      id: run-tests
+      if: ${{steps.build-tests.outcome == 'success'}}
+      working-directory: ${{ steps.strings.outputs.build-test-dir }}
+      # Execute tests. Note that --build-config is needed (see build)
+      run: |
+        ctest --build-config Release --output-on-failure
 
   gcc-coverage:
-    uses: ./.github/workflows/common_cmake.yml
-    with:
-      c-compiler: gcc
-      cpp-compiler: g++
-      build-type: Debug
-      cmake-test-arguments: |
+    # Matrix is just so that the YAML anchors work
+    strategy:
+      matrix:
+        include:
+        - c-compiler: gcc
+          cpp-compiler: g++
+          os: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v4
+    - *setup-dirs
+    - &config-coverage
+      name: Configure CMake with Coverage
+      run: >
+        cmake -B ${{ steps.strings.outputs.build-output-dir }}
+        -S ${{ github.workspace }}
+        ${{ steps.strings.outputs.cmake_args }}
+        -D build_testing=ON
+        -D BuildExamples=ON
+        -D BuildInternalTests=ON
         -D BuildWithCoverage=ON
-      cmake-arguments: |
-        -D BuildWithCoverage=ON
-      coverage: true
-    secrets: inherit
+    - *build-code
+    - name: Run Tests with Coverage
+      id: run-tests
+      working-directory: ${{ steps.strings.outputs.build-output-dir }}  
+      run: |
+        ctest --build-config Release --output-on-failure
+    - name: Coverage Reporting
+      # Only run coverage if gcc is used and build type is Debug (for less inlineing)
+      id: coverage
+      # Install gcovr
+      # Get coverage in normal format and print
+      # Get coverage as single percentage
+      # Write it to output for use later
+      # Should always be 100%
+      run: |
+       sudo apt-get install gcovr -y
+       gcovr -r ${{ steps.strings.outputs.build-output-dir }} -f 'CppUnit*' -s -o coverage.txt
+       percent=$(cat coverage.txt | grep TOTAL | grep -oP '\d+%')
+       echo "coverage-percent-value=$percent" >> "$GITHUB_OUTPUT"
 
+    - name: Build Coverage Badge
+      if: ${{ github.ref_name == 'main' }}
+      uses: peterrhodesdev/build-a-badge@v1.3.1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        filename: "coverage-badge-data"
+        label: "Coverage"
+        namedLogo: 'github'
+        color: "brightgreen"
+        message: "${{steps.coverage.outputs.coverage-percent-value}}"
+        
 
