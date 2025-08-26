@@ -108,7 +108,7 @@ jobs:
       run: |
         ctest --build-config Debug --output-on-failure
     - name: Coverage Reporting
-      # Only run coverage if gcc is used and build type is Debug (for less inlineing)
+      # Only run coverage if gcc is used and build type is Debug (for less inlining)
       id: coverage
       # Install gcovr
       # Get coverage in normal format and print
