@@ -20,7 +20,7 @@ namespace {
         };
         ::CppUnit::to::gtest::InternalRegisterTestsVector<Class_name>(
             all_tests, " ", __LINE__, " ");
-        // No crash, no throw
+        // No throw
     }
 
     TEST(TestRegisteringTests, NullTestName)
@@ -48,7 +48,6 @@ namespace {
                 all_tests, nullptr, __LINE__, ""
             )
         );
-        // No crash
     }
 
     TEST(TestRegisteringTests, NullFixtureName)
@@ -65,7 +64,6 @@ namespace {
                 all_tests, "", __LINE__, nullptr
             )
         );
-        // No crash
     }
 
 }

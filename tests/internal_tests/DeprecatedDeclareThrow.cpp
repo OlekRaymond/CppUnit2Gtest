@@ -16,7 +16,10 @@ protected:
         throw std::logic_error("some logic_error");
     }
     void prefered() {
-        CPPUNIT_ASSERT_THROW ( throw std::logic_error("some logic_error"), std::logic_error );
+        // Prefer the gtest macro for easier migration.
+        ASSERT_THROW ( throw std::logic_error("some logic_error"), std::logic_error );
+        // If not avoidable, use the CppUnit macro:
+        CPPUNIT_ASSERT_THROW( throw std::logic_error("some logic_error"), std::logic_error );
     }
 };
 
