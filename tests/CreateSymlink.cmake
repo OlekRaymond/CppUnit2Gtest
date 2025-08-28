@@ -25,5 +25,6 @@ endfunction()
 
 function(create_header_alias source_file target_file)
     # Write an include to the target file
-    file(WRITE "${target_file}" "#include \"${source_file}\"\n")
+    # The ifndef is not strictly necessary but might reduce compile time
+    file(WRITE "${target_file}" "#ifndef CPPUNIT_TO_GTEST_HEADER_ \n#include \"${source_file}\"\n#endif\n")
 endfunction()

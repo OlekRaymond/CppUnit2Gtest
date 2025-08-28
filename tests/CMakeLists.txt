@@ -8,10 +8,15 @@ cmake_minimum_required(VERSION 3.2...3.33)
 
 project(CppUnit2Gtest_AllTests)
 
-option(BuildExamples "Should the examples be built when build_testing is on" ON)
-option(BuildInternalTests "Should we build the internal tests" OFF)
+option(BuildExamples      "Builds all the examples in ./examples" ON)
+option(BuildInternalTests "Builds the internal tests" OFF)
+option(BuildUnityTests 
+    "Build lots of tests into one large file with expanded preprocessor, aimed for mutation tests which do not mutate macros"
+    OFF
+)
+option(MutationTesting "Experimental, for mutation testing" OFF)
 
-if (NOT (BuildExamples OR BuildInternalTests))
+if (NOT (BuildExamples OR BuildInternalTests OR BuildUnityTests))
     message(FATAL_ERROR "Asked to build tests but no tests were given")
 endif()
 
@@ -34,10 +39,56 @@ if (BuildInternalTests)
         "internal_tests/TestGettingData.cpp"
     )
 endif()
+if (BuildUnityTests)
+    # Call gcc with -E to get a preprocessed file but with no external headers then add the headers and compile again
+    
+    # We can't use these includes before preprocessing
+    #  hold them to prepend after preprocessing
+    set(GtestTempHeaderInclude "${CMAKE_CURRENT_BINARY_DIR}/gtest_headers.txt")
+    file(WRITE "${GtestTempHeaderInclude}" "#include <gtest/gtest.h>\n#include <gtest/gtest-spi.h>\n")
+
+    #  Get the preprocessed file and compile against that
+    set(UnityTestSrc "${CMAKE_CURRENT_BINARY_DIR}/AllTestsUnity_NoPP.cpp")                  # Before preprocessing
+    set(UnityTestPreprocessed "${CMAKE_CURRENT_BINARY_DIR}/AllTestsUnity_PP.cpp")           # After preprocessing
+    set(UnityTestPreprocessedIncludes "${CMAKE_CURRENT_BINARY_DIR}/AllTestsUnity_PPI.cpp")  # After preprocessing with includes
+
+    # Read our main header into a variable
+    file(READ "${CMAKE_CURRENT_LIST_DIR}/../CppUnit2Gtest.hpp" CPPUNIT2GTEST_CONTENTS)
+    # Remove all includes
+    string(REGEX REPLACE "#include <[A-Za-z0-9\/\.]*>" "" CPPUNIT2GTEST_CONTENTS "${CPPUNIT2GTEST_CONTENTS}")
+    # Manual appending our own, modified header and copy it into UnityTestSrc 
+    configure_file(
+        "${CMAKE_CURRENT_LIST_DIR}/internal_tests/AllTestsUnity.cpp.in"
+        "${UnityTestSrc}"
+        @ONLY
+    )
+    # Preprocess the file to expand all macros, output the preprocessed file
+    add_custom_command(
+        OUTPUT "${UnityTestPreprocessed}"
+        COMMAND ${CMAKE_CXX_COMPILER} -E -P "${UnityTestSrc}" -o "${UnityTestPreprocessed}"
+        DEPENDS "${UnityTestSrc}"
+        COMMENT "Preprocessing AllTestsUnity.cpp to AllTestsUnity_PP.cpp"
+    )
+    # Add back the includes it needs to compile.
+    #   Needs to be custom command (must be done after the previous custom command so the file exists)
+    add_custom_command(
+        OUTPUT "${UnityTestPreprocessedIncludes}"
+        COMMAND ${CMAKE_COMMAND} -E cat 
+            "${GtestTempHeaderInclude}" 
+            "${UnityTestPreprocessed}" 
+            > "${UnityTestPreprocessedIncludes}"
+        DEPENDS "${UnityTestPreprocessed}"
+    )
+    # Add the eventaul file so we run the tests against it.
+    list(APPEND CppUnitFiles
+        ${UnityTestPreprocessedIncludes}
+    )
+endif()
 
 include(GetGtest.cmake)
 add_executable(${PROJECT_NAME} ${CppUnitFiles})
 target_link_libraries(${PROJECT_NAME} PRIVATE GTest::GTest GTest::Main)
+
 if (BuildWithCoverage)
     if (MSVC)
         message(FATAL_ERROR "Cannot build with coverage on MSVC, please use GCC")
@@ -46,6 +97,7 @@ if (BuildWithCoverage)
         target_link_options(${PROJECT_NAME} PRIVATE --coverage)
     endif()
 endif()
+
 if (NOT build_testing)
     message(STATUS "Building tests as if external user by using find_package calls")
     find_package(CppUnit2Gtest REQUIRED)
@@ -72,5 +124,8 @@ else()
 endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+# The gtest find tests function doesn't work because it relies on regex expressions
+#  We have tests that look like CppUnit so it won't add them.
+# It's a lot easier to just run the tests directly
 enable_testing()
 add_test(NAME AllTests COMMAND ${PROJECT_NAME})

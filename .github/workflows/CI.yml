@@ -159,6 +159,7 @@ jobs:
         -D build_testing=ON
         -D BuildExamples=ON
         -D BuildInternalTests=ON
+        -D BuildUnityTests=ON
         -DCMAKE_BUILD_TYPE=Debug
         -DCMAKE_CXX_FLAGS="-O0 -fpass-plugin=/usr/lib/mull-ir-frontend-18 -g -grecord-command-line"
     - *build-code
