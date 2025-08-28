@@ -4,7 +4,7 @@
 
 # CppUnit to Gtest
 
-A C++ adapter library that allows CppUnit tests to run with Google Test (gtest) without requiring complete test rewrites.
+A C++ adapter library that allows CppUnit tests to run as if Google Tests (gtests) without requiring any test rewrites.
 
 ## Quick Start
 

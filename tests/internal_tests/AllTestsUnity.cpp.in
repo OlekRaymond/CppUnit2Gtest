@@ -1,0 +1,167 @@
+
+// Doing an include and preprocessing the file is tricky
+//  Instead get cmake to do all the hard work
+@CPPUNIT2GTEST_CONTENTS@
+
+namespace unity_test {
+
+struct UnityExampleTestSuite : CppUnit::TestCase {
+    void testConstructor() { called = true; }
+    bool called = false;
+    CPPUNIT_TEST_SUITE( UnityExampleTestSuite );
+    CPPUNIT_TEST( example );
+    CPPUNIT_TEST( anotherExample );
+    CPPUNIT_TEST( testAdd );
+    CPPUNIT_TEST( testEquals );
+    CPPUNIT_TEST_EXCEPTION( deprecated, std::logic_error );
+    CPPUNIT_TEST( prefered );
+    CPPUNIT_TEST( even_more_prefered );
+    CPPUNIT_TEST_SUITE_END();
+
+protected:
+    double m_value1 = -1.0;
+    double m_value2 = -2.0;
+
+public:
+    void setUp() final {
+        m_value1 = 2.0;
+        m_value2 = 3.0;
+    }
+
+protected:
+    void example() const {
+      CPPUNIT_ASSERT_DOUBLES_EQUAL( 1.0, 1.1, 0.5 );
+      ASSERT_NEAR(1.0, 1.1, 0.5);
+      // This doesn't work (?)
+      // EXPECT_FATAL_FAILURE( ( CPPUNIT_ASSERT_DOUBLES_EQUAL( 1.0, 1.1, 0.05 ); ), "");
+      //  so recreate it:
+      EXPECT_FATAL_FAILURE( ASSERT_NEAR(1.0, 1.1, 0.05); , "");
+      EXPECT_FATAL_FAILURE(CPPUNIT_ASSERT( 1 == 0 ), "1 == 0");
+      CPPUNIT_ASSERT( 1 == 1 );
+    }
+
+    void anotherExample() const {
+        EXPECT_FATAL_FAILURE(CPPUNIT_ASSERT (1 == 2), "1 == 2");
+        CPPUNIT_ASSERT(!(1 == 2));
+        ASSERT_NE(1, 2);
+    }
+    void testAdd() const {
+      double result = m_value1 + m_value2;
+      EXPECT_FATAL_FAILURE(CPPUNIT_ASSERT( (0.2 + 0.3) == 6.0 ), "Actual: false");
+      EXPECT_FATAL_FAILURE(CPPUNIT_ASSERT_EQUAL( (0.2 + 0.3), 6.0 ), "6.0");
+      ASSERT_DOUBLE_EQ( result, 5.0 );
+      ASSERT_NE( result, 6.0 );
+    }
+    void testEquals() const {
+      long* l1 = new long(12);
+      long* l2 = new long(12);
+
+      CPPUNIT_ASSERT_EQUAL( 12, 12 );
+      CPPUNIT_ASSERT_EQUAL( 12L, 12L );
+      CPPUNIT_ASSERT_EQUAL( *l1, *l2 );
+      ASSERT_NE( l1, l2 );
+
+      delete l1;
+      delete l2;
+
+      CPPUNIT_ASSERT( 12L == 12L );
+      EXPECT_FATAL_FAILURE(CPPUNIT_ASSERT_EQUAL( 12, 13 ), "12");
+      ASSERT_NE( 12, 13 );
+      CPPUNIT_ASSERT_DOUBLES_EQUAL( 12.0, 11.99, 0.5 );
+    }
+
+    void deprecated() {
+        throw std::logic_error("some logic_error");
+    }
+    void prefered() {
+        // Prefer the non-deprecated cppunit macro to the deprecated one:
+        CPPUNIT_ASSERT_THROW ( throw std::logic_error("some logic_error"), std::logic_error );
+    }
+    void even_more_prefered() {
+        // Prefer gtest to cppunit for ease of migration: 
+        ASSERT_THROW ( throw std::logic_error("some logic_error"), std::logic_error );
+    }
+};
+
+CPPUNIT_TEST_SUITE_REGISTRATION( UnityExampleTestSuite );
+
+    TEST(UnityTestTestData, GoodValues) {
+        ::CppUnit::to::gtest::TestData<UnityExampleTestSuite> test_data{
+            +[](UnityExampleTestSuite& e){ e.testConstructor(); }, 0, ""
+        };
+        ASSERT_TRUE(test_data.line == 0);
+        ASSERT_TRUE(test_data.testMethod != nullptr);
+        ASSERT_TRUE(test_data.testName != nullptr );
+        ASSERT_TRUE(test_data.testName == std::string{""});
+
+        UnityExampleTestSuite someTestSuite{};
+        (*test_data.testMethod)(someTestSuite);
+        ASSERT_TRUE(someTestSuite.called);
+    }
+
+    TEST(UnityTestTestData, NullName) {
+        ASSERT_ANY_THROW(
+
+            auto c = (::CppUnit::to::gtest::TestData<UnityExampleTestSuite>{
+                +[](UnityExampleTestSuite& e){ e.testConstructor(); }, 0, nullptr
+            } );
+
+        );
+    }
+    TEST(UnityTestRegisteringTests, GoodValues)
+    {
+        std::vector<::CppUnit::to::gtest::TestData<UnityExampleTestSuite>> all_tests {
+            ::CppUnit::to::gtest::TestData<UnityExampleTestSuite>{
+                +[](UnityExampleTestSuite& m ){ }
+                , 0
+                , " "
+            }
+        };
+        ::CppUnit::to::gtest::InternalRegisterTestsVector<UnityExampleTestSuite>(
+            all_tests, " ", __LINE__, " ");
+        // no throw
+    }
+
+    TEST(UnityTestRegisteringTests, NullTestName)
+    {        
+        ASSERT_ANY_THROW(
+            auto a = (::CppUnit::to::gtest::TestData<UnityExampleTestSuite>{
+                +[](UnityExampleTestSuite& m ){ }
+                , 0
+                , nullptr
+            });
+        );
+    }
+
+    TEST(UnityTestRegisteringTests, NullFileName)
+    {
+        std::vector<::CppUnit::to::gtest::TestData<UnityExampleTestSuite>> all_tests {
+            ::CppUnit::to::gtest::TestData<UnityExampleTestSuite>{
+                +[](UnityExampleTestSuite& m ){ }
+                , 0
+                , ""
+            }
+        };
+        ASSERT_ANY_THROW(
+            ::CppUnit::to::gtest::InternalRegisterTestsVector<UnityExampleTestSuite>(
+                all_tests, nullptr, __LINE__, ""
+            )
+        );
+    }
+
+    TEST(UnityTestRegisteringTests, NullFixtureName)
+    {
+        std::vector<::CppUnit::to::gtest::TestData<UnityExampleTestSuite>> all_tests {
+            ::CppUnit::to::gtest::TestData<UnityExampleTestSuite>{
+                +[](UnityExampleTestSuite& m ){ }
+                , 0
+                , ""
+            }
+        };
+        ASSERT_ANY_THROW(
+            ::CppUnit::to::gtest::InternalRegisterTestsVector<UnityExampleTestSuite>(
+                all_tests, "", __LINE__, nullptr
+            )
+        );
+    }
+}
