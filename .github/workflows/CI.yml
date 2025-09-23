@@ -132,6 +132,33 @@ jobs:
         color: "brightgreen"
         message: "${{steps.coverage.outputs.coverage-percent-value}}"
   
+  compiler-warnings:
+    # - name: Test compile with Wextra and Wall
+    # Matrix is just so that the YAML anchors work
+    strategy:
+      matrix:
+        include:
+        - c-compiler: gcc
+          cpp-compiler: g++
+          os: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v4
+    - *setup-dirs
+    - name: Configure CMake with Mutation Testing
+      # O0 is on for debug anyway.
+      run: >
+        cmake -B ${{ steps.strings.outputs.build-output-dir }}
+        -S ${{ github.workspace }}
+        ${{ steps.strings.outputs.cmake_args }}
+        -D build_testing=ON
+        -D BuildExamples=OFF
+        -D BuildInternalTests=ON
+        -DCMAKE_BUILD_TYPE=Debug
+        -DCMAKE_CXX_FLAGS="-Wall -Wextra -Wconversion"
+    - *build-code
+    - *run-tests
+
   mutation-testing:
     strategy:
       matrix:

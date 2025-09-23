@@ -94,7 +94,7 @@ namespace to { namespace gtest {
 
     /// Registers a vector of tests from a test suite, can be less or more than overload
     template<typename TestSuite>
-    int InternalRegisterTestsVector(
+    size_t InternalRegisterTestsVector(
         std::vector<TestData<TestSuite>>& testSuiteData,
         const char* file_name,
         const int line_number,
@@ -121,7 +121,7 @@ namespace to { namespace gtest {
 
     /// Register required tests from a suite 
     template<typename TestSuite>
-    int InternalRegisterTests(const char* file_name, int line_number, const char* fixtureName )
+    size_t InternalRegisterTests(const char* file_name, int line_number, const char* fixtureName )
     {
         std::vector<TestData<TestSuite>> tests = TestSuite::GetAllTests_();
 
@@ -206,7 +206,7 @@ namespace to { namespace gtest {
 #define CPPUNIT_TEST_SUITE_REGISTRATION(Class_name) CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(Class_name, #Class_name)
 
 #define CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(Class_name, suite_additional_name ) namespace{ \
-    static const int Cpp2Gtest_UNIQUE_NAME(unused_) = \
+    static const size_t Cpp2Gtest_UNIQUE_NAME(unused_) = \
     ::CppUnit::to::gtest::InternalRegisterTests<Class_name>(#Class_name, __LINE__, suite_additional_name); \
 }
 

@@ -25,7 +25,7 @@ namespace {
     TEST(TestTestData, NullName) {
         ASSERT_ANY_THROW(
 
-            auto c = (::CppUnit::to::gtest::TestData<ExampleTestSuite>{
+            [[maybe_unused]] auto c = (::CppUnit::to::gtest::TestData<ExampleTestSuite>{
                 +[](ExampleTestSuite& e){ e.testConstructor(); }, 0, nullptr
             } );
 
