@@ -13,7 +13,7 @@ namespace {
     {
         std::vector<::CppUnit::to::gtest::TestData<Class_name>> all_tests {
             ::CppUnit::to::gtest::TestData<Class_name>{
-                +[](Class_name& m ){ }
+                +[]([[maybe_unused]] Class_name& m ){ }
                 , 0
                 , " "
             }
@@ -26,8 +26,8 @@ namespace {
     TEST(TestRegisteringTests, NullTestName)
     {        
         ASSERT_ANY_THROW(
-            auto a = (::CppUnit::to::gtest::TestData<Class_name>{
-                +[](Class_name& m ){ }
+            [[maybe_unused]] auto a = (::CppUnit::to::gtest::TestData<Class_name>{
+                +[]([[maybe_unused]] Class_name& m ){ }
                 , 0
                 , nullptr
             });
@@ -38,7 +38,7 @@ namespace {
     {
         std::vector<::CppUnit::to::gtest::TestData<Class_name>> all_tests {
             ::CppUnit::to::gtest::TestData<Class_name>{
-                +[](Class_name& m ){ }
+                +[]([[maybe_unused]] Class_name& m ){ }
                 , 0
                 , ""
             }
@@ -54,7 +54,7 @@ namespace {
     {
         std::vector<::CppUnit::to::gtest::TestData<Class_name>> all_tests {
             ::CppUnit::to::gtest::TestData<Class_name>{
-                +[](Class_name& m ){ }
+                +[]([[maybe_unused]] Class_name& m ){ }
                 , 0
                 , ""
             }
