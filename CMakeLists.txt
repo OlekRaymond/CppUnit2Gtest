@@ -75,6 +75,7 @@ include(tests/CreateSymlink.cmake)
 create_header_alias(\${SOURCE_FILE} \${INSTALL_INCLUDE_DIR}/cppunit/portability/Stream.h)
 create_header_alias(\${SOURCE_FILE} \${INSTALL_INCLUDE_DIR}/cppunit/extensions/HelperMacros.h)
 create_header_alias(\${SOURCE_FILE} \${INSTALL_INCLUDE_DIR}/cppunit/config/SourcePrefix.h)
+create_header_alias(\${SOURCE_FILE} \${INSTALL_INCLUDE_DIR}/cppunit/TestAssert.h)
 ")
 
 # We don't install GTest so the user can have any they would like and/or install it later
