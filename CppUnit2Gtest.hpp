@@ -210,18 +210,26 @@ namespace to { namespace gtest {
     ::CppUnit::to::gtest::InternalRegisterTests<Class_name>(#Class_name, __LINE__, suite_additional_name); \
 }
 
-/// The following macros are for running the tests under a hierarchy,
+/// The following two macros are for running the tests under a hierarchy,
 ///   we don't see the value so they all do nothing
 #define CPPUNIT_REGISTRY_ADD(which, to)
 #define CPPUNIT_REGISTRY_ADD_TO_DEFAULT(which)
 
-// Wasn't tested in CppUnit, not tested here!
+// For backwards compatibility, not recommended
 #if CPPUNIT_ENABLE_CU_TEST_MACROS
 #   define CU_TEST_SUITE(tc)                CPPUNIT_TEST_SUITE(tc)
 #   define CU_TEST_SUB_SUITE(tc,sc)         CPPUNIT_TEST_SUB_SUITE(tc,sc)
 #   define CU_TEST(tm)                      CPPUNIT_TEST(tm)
 #   define CU_TEST_SUITE_END()              CPPUNIT_TEST_SUITE_END()
 #   define CU_TEST_SUITE_REGISTRATION(tc)   CPPUNIT_TEST_SUITE_REGISTRATION(tc)
+#endif
+// For backwards compatibility, not recommended
+#if CPPUNIT_ENABLE_NAKED_ASSERT
+#   undef assert
+#   define assert(c)                        ASSERT_TRUE(c)
+#   define assertEqual(e,a)                 ASSERT_EQ(e,a)
+#   define assertDoublesEqual(e,a,d)        ASSERT_NEAR(e,a,d)
+#   define assertLongsEqual(e,a)            ASSERT_EQ(e,a)
 #endif
 
 #define CPPUNIT_TEST_FIXTURE(FixtureClass,testName) TEST_F(FixtureClass, testName)
@@ -240,6 +248,19 @@ namespace to { namespace gtest {
 #define CPPUNIT_FAIL(message)                                        FAIL(message)
 #define CPPUNIT_ASSERT_ASSERTION_PASS(e)                             ASSERT_NO_THROW(e)
 #define CPPUNIT_ASSERT_ASSERTION_PASS_MESSAGE(msg, e)                ASSERT_NO_THROW(e) << msg
+#define CPPUNIT_ASSERT_LESS(expected, actual)                        ASSERT_LT(actual, expected)
+#define CPPUNIT_ASSERT_LESSEQUAL(expected, actual)                   ASSERT_LE(actual, expected)
+#define CPPUNIT_ASSERT_GREATER(expected, actual)                     ASSERT_GT(actual, expected)
+#define CPPUNIT_ASSERT_GREATEREQUAL(expected, actual)                ASSERT_GE(actual, expected)
+
+// These aren't in CppUnit but we can be nicer to the user
+#define CPPUNIT_ASSERT_LESS_MESSAGE(msg, expected, actual)           ASSERT_LT(actual, expected) << msg
+#define CPPUNIT_ASSERT_GREATER_MESSAGE(msg, expected, actual)        ASSERT_GT(actual, expected) << msg
+#define CPPUNIT_ASSERT_LESSEQUAL_MESSAGE(msg, expected, actual)      ASSERT_LE(actual, expected) << msg
+#define CPPUNIT_ASSERT_GREATEREQUAL_MESSAGE(msg, expected, actual)   ASSERT_GE(actual, expected) << msg
+
+#define CppUnit2Gtest_FailCompilation_NotSupported static_assert(false, \
+    "This CppUnit macro is not supported. Please rewrite this test in GTest or with normal macros")
 
 // Things like assert failed are intentionally not added
 //  We can add them but behaviour could be buggy
@@ -247,5 +268,11 @@ namespace to { namespace gtest {
 //   early so we'd call the lambda, return to outer function then `ASSERT_TRUE(HasFailure());`  (?)
 //  Alternatively we can add the gtest header for testing extenstions (see internal tests) and use that.
 //   Neither seem like a good idea
+// These include:
+#define CPPUNIT_TEST_SUITE_ADD_TEST(test) CppUnit2Gtest_FailCompilation_NotSupported
+
+// Does nothing, these were for exporting plugins (not adding a main).
+#define CPPUNIT_PLUGIN_IMPLEMENT_MAIN()
+#define CPPUNIT_PLUGIN_IMPLEMENT()
 
 #endif
