@@ -7,7 +7,9 @@ project(
 )
 
 option(build_testing "Should we build our examples and tests" OFF)
-option(EnableMainHelperClasses "Enable main-like classes for CppUnit2Gtest" OFF)
+option(EnableMainHelperClasses 
+        "Aims to allow for drop in replacement. Users should prefer refactoring the main function"
+       OFF)
 option(InstallAsCppUnit "Install the package as 'cppunit' to allow drop-in replacement" OFF)
 
 if(build_testing)

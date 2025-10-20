@@ -300,9 +300,8 @@ namespace to { namespace gtest {
         const testing::TestInfo* testInfo;
         
         explicit TestAdaptorActualTest(const testing::TestInfo* testInfo_) : testInfo(testInfo_) {}
-        int getChildTestCount() const override {
-            return 0;
-        }
+        
+        int getChildTestCount() const override { return 0; }
 
         Test* getChildTestAt([[maybe_unused]] int index) override { throw std::invalid_argument("No child tests available"); }
         Test* findTest(const std::string& testName) override {
@@ -421,6 +420,7 @@ struct TextTestRunner {
     //  CPPUNIT_NS::TextUi::TestRunner runner;
     std::string filter = "";
 
+    // Not a cppunit method
     void addTest(const std::string& testName) {
         if (testName.empty()) {
             throw std::invalid_argument("Test name cannot be empty");
@@ -456,6 +456,9 @@ struct TextTestRunner {
         filter = "--gtest_filter=" + filter;
     }
 
+    // TODO: Mock and test:
+    //  testing::InitGoogleTest
+    //  RUN_ALL_TESTS
     bool run(
             [[maybe_unused]] const std::string& testPath="",
             [[maybe_unused]] bool doWait=false,
