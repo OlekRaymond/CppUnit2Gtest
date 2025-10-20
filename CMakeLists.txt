@@ -7,6 +7,7 @@ project(
 )
 
 option(build_testing "Should we build our examples and tests" OFF)
+option(EnableMainLikeClasses "Enable main-like classes for CppUnit2Gtest" OFF)
 
 if(build_testing)
     enable_testing()
@@ -16,6 +17,9 @@ endif()
 # Empty targets (for installing)
 add_library(CppUnit2Gtest INTERFACE)
 add_library(CppUnit2Gtest::CppUnit2Gtest ALIAS CppUnit2Gtest)
+if (EnableMainLikeClasses)
+    target_compile_definitions(CppUnit2Gtest INTERFACE Cpp2Unit2Gtest_EnableMainHelperClasses)
+endif()
 
 # Set include directories
 target_include_directories(CppUnit2Gtest INTERFACE

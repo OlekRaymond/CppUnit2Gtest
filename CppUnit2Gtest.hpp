@@ -275,4 +275,189 @@ namespace to { namespace gtest {
 #define CPPUNIT_PLUGIN_IMPLEMENT_MAIN()
 #define CPPUNIT_PLUGIN_IMPLEMENT()
 
-#endif
+#if defined(Cpp2Unit2Gtest_EnableMainHelperClasses)
+
+namespace CppUnit {
+
+struct Test {
+    virtual int getChildTestCount() const = 0;
+    virtual std::string getName() const = 0;
+    // constness removed,
+    //  returning editable result from a const function seems wrong
+    //  TODO: Review impact and consider refactor to singleton lookup
+    virtual Test* getChildTestAt(int index) /*const*/ = 0;
+    virtual Test* findTest(const std::string& testName) /*const*/ = 0;
+};
+
+namespace to { namespace gtest {
+    // This is the actual test data (never children)
+    struct TestAdaptorActualTest : Test
+    {
+        const testing::TestInfo* testInfo;
+        
+        explicit TestAdaptorActualTest(const testing::TestInfo* testInfo_) : testInfo(testInfo_) {}
+        int getChildTestCount() const override {
+            return 0;
+        }
+
+        Test* getChildTestAt(int index) override { throw std::invalid_argument("No child tests available"); }
+        Test* findTest(const std::string& testName) override {
+            return (testInfo->name() == testName) ? this : throw std::invalid_argument("Test not found: " + testName);
+        }
+
+        std::string getName() const override { return testInfo->name(); }
+    };
+    
+    inline std::vector<TestAdaptorActualTest> CreateTests(const testing::TestSuite* testSuite) {
+        std::vector<TestAdaptorActualTest> tests;
+        const size_t test_count = testSuite->total_test_count();
+        tests.reserve(test_count);
+        for (size_t i = 0; i < test_count; ++i) {
+            const testing::TestInfo* test_info = testSuite->GetTestInfo(i);
+            tests.emplace_back(test_info);
+        }
+        return tests;
+    }
+
+    struct TestAdaptorSuite : public Test {
+        const testing::TestSuite* testSuite;
+        std::vector<TestAdaptorActualTest> tests = CreateTests(testSuite);
+        
+        explicit TestAdaptorSuite(const testing::TestSuite* testSuite_) : testSuite(testSuite_) {}
+        int getChildTestCount() const override {
+            const size_t test_count = testSuite->total_test_count();
+            if (test_count > static_cast<size_t>(std::numeric_limits<int>::max())) {
+                throw std::runtime_error("Number of tests exceeds maximum int value");
+            }
+            return static_cast<int>(test_count);
+        }
+        const Test* getChildTestAt(int index) const { return &tests.at(index); }
+        Test* getChildTestAt(int index) override    { return &tests.at(index); }
+        std::string getName() const override { return testSuite->name(); }
+        Test* findTest(const std::string& testName) override {
+            for (auto& test : tests) {
+                if (test.getName() == testName) {
+                    return &test;
+                }
+            }
+            throw std::invalid_argument("Test not found: " + testName);
+        }
+    };
+
+    inline std::vector<TestAdaptorSuite> CreateSuites() {
+        std::vector<TestAdaptorSuite> suites;
+        const testing::UnitTest* unit_test = testing::UnitTest::GetInstance();
+        const size_t test_suite_count = unit_test->total_test_suite_count();
+        suites.reserve(test_suite_count);
+        for (size_t i = 0; i < test_suite_count; ++i) {
+            const testing::TestSuite* test_suite = unit_test->GetTestSuite(i);
+            suites.emplace_back(test_suite);
+        }
+        return suites;
+    }
+
+    struct TestAdaptorRoot : public Test {
+        std::vector<TestAdaptorSuite> suites = CreateSuites();
+
+        // Returns number of test suites
+        int getChildTestCount() const override {
+            const size_t test_count = suites.size();
+            if (test_count > static_cast<size_t>(std::numeric_limits<int>::max())) {
+                throw std::runtime_error("Number of tests exceeds maximum int value");
+            }
+            return static_cast<int>(test_count);
+	    }
+
+        Test* getChildTestAt(int index) override { return &suites.at(index); }
+
+        std::string getName() const override { return "All Tests"; }
+
+        Test* findTest(const std::string& testName) override {
+            for (auto& suite : suites) {
+                if (suite.getName() == testName) {
+                    return &suite;
+                }
+                
+                try { // Follow CppUnit's decision
+                    return suite.findTest(testName);
+                } catch (const std::invalid_argument&) { }
+                
+            }
+            throw std::invalid_argument("Test not found: " + testName);
+        }
+    };
+
+}} // namespace to::gtest
+
+struct TestFactoryRegistry {
+    TestFactoryRegistry() = default;
+	
+	static TestFactoryRegistry& getRegistry (const std::string& [[maybe_unused]] name="All Tests") {
+		// return singleton registry
+        static TestFactoryRegistry registry{};
+        return registry;
+	}
+
+
+	Test* makeTest() {
+		static to::gtest::TestAdaptorRoot root;
+        return &root;
+	}
+	// Required by
+	//  printTestNames(registry.makeTest(), Indentation(0));
+};
+
+struct TextTestRunner {
+    // Required by
+    //  CPPUNIT_NS::TextUi::TestRunner runner;
+    std::string filter = "";
+
+    void addTest(Test* test) {
+        if (test == nullptr) {
+            throw std::invalid_argument("Test cannot be null");
+        }
+        const auto test_name = test->getName(); 
+        // if test (it's a suite/selection) is root, do nothing
+        if (test_name == "All Tests") {  return; }
+        // else filter everything else out then add this one
+        if (filter.empty()) {
+            filter = test_name;
+        } else {
+            filter += ":" + test_name;
+        }
+    }
+    // Required by
+    //  runner.addTest(registry.makeTest());
+    //  runner.addTest(overallTest->findTest(unit));
+
+    bool run(const std::string& testPath="", bool doWait=false, bool doPrintResult=true, bool doPrintProgress=true) {
+        int argc = filter.empty() ? 1 : 2;
+        filter = ("--gtest_filter=" + filter);
+        const char* argv_data[] = { "executable_name", filter.c_str() };
+        char** argv = const_cast<char**>(argv_data); 
+        testing::InitGoogleTest(&argc, argv);
+        return 0 == RUN_ALL_TESTS();
+    }
+    // Required by
+    // 	const auto ok = runner.run(string(), false);
+    //  ok:
+    //	  std::cerr << (ok ? "Tests successful\n" : "Tests failed\n");
+    // 	  return !ok;
+    
+};
+namespace TextUi { 
+    using TestRunner = ::CppUnit::TextTestRunner; 
+    // Class is deprecated: https://cppunit.sourceforge.net/doc/cvs/namespace_text_ui.html
+    // Does not have same interface as: https://cppunit.sourceforge.net/doc/cvs/class_test_runner.html
+    // Has similar (enough) interface as: https://cppunit.sourceforge.net/doc/cvs/class_text_test_runner.html
+}
+
+
+} // namespace CppUnit
+
+// We are done with this to undef it
+//  (reduce intilisense and namespace pollution)
+#undef Cpp2Unit2Gtest_EnableMainHelperClasses
+#endif // Cpp2Unit2Gtest_EnableMainHelperClasses
+
+#endif // C++11 style header guard CPPUNIT_TO_GTEST_HEADER_
