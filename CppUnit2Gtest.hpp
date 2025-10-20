@@ -323,7 +323,9 @@ namespace to { namespace gtest {
         const testing::TestSuite* testSuite;
         std::vector<TestAdaptorActualTest> tests = CreateTests(testSuite);
         
-        explicit TestAdaptorSuite(const testing::TestSuite* testSuite_) : testSuite(testSuite_) {}
+        explicit TestAdaptorSuite(const testing::TestSuite* testSuite_)
+            : testSuite(testSuite_), tests(CreateTests(testSuite_)) {}
+        
         int getChildTestCount() const override {
             const size_t test_count = testSuite->total_test_count();
             if (test_count > static_cast<size_t>(std::numeric_limits<int>::max())) {
@@ -366,7 +368,7 @@ namespace to { namespace gtest {
                 throw std::runtime_error("Number of tests exceeds maximum int value");
             }
             return static_cast<int>(test_count);
-	    }
+        }
 
         Test* getChildTestAt(int index) override { return &suites.at(index); }
 
@@ -391,20 +393,20 @@ namespace to { namespace gtest {
 
 struct TestFactoryRegistry {
     TestFactoryRegistry() = default;
-	
-	static TestFactoryRegistry& getRegistry (const std::string& [[maybe_unused]] name="All Tests") {
-		// return singleton registry
+    
+    static TestFactoryRegistry& getRegistry (const std::string& [[maybe_unused]] name="All Tests") {
+        // return singleton registry
         static TestFactoryRegistry registry{};
         return registry;
-	}
+    }
 
 
-	Test* makeTest() {
-		static to::gtest::TestAdaptorRoot root;
+    Test* makeTest() {
+        static to::gtest::TestAdaptorRoot root;
         return &root;
-	}
-	// Required by
-	//  printTestNames(registry.makeTest(), Indentation(0));
+    }
+    // Required by
+    //  printTestNames(registry.makeTest(), Indentation(0));
 };
 
 struct TextTestRunner {
@@ -432,10 +434,11 @@ struct TextTestRunner {
 
     bool run(const std::string& testPath="", bool doWait=false, bool doPrintResult=true, bool doPrintProgress=true) {
         int argc = filter.empty() ? 1 : 2;
-        filter = ("--gtest_filter=" + filter);
-        const char* argv_data[] = { "executable_name", filter.c_str() };
-        char** argv = const_cast<char**>(argv_data); 
-        testing::InitGoogleTest(&argc, argv);
+        filter = "--gtest_filter=" + filter;
+        std::string fake_exe_name = "executable_name";
+        char* argv_data[] = { fake_exe_name.data(), filter.data() };
+        char** argv = argv_data; 
+        testing::InitGoogleTest(&argc, argv_data);
         return 0 == RUN_ALL_TESTS();
     }
     // Required by
@@ -456,7 +459,7 @@ namespace TextUi {
 } // namespace CppUnit
 
 // We are done with this to undef it
-//  (reduce intilisense and namespace pollution)
+//  (reduce intelli-sense and namespace pollution)
 #undef Cpp2Unit2Gtest_EnableMainHelperClasses
 #endif // Cpp2Unit2Gtest_EnableMainHelperClasses
 
