@@ -290,6 +290,10 @@ struct Test {
 };
 
 namespace to { namespace gtest {
+    inline size_t ToSize_t(int value) {
+        if (value < 0) { throw std::runtime_error("Negative value cannot be converted to size_t"); }
+        return static_cast<size_t>(value);
+    }
     // This is the actual test data (never children)
     struct TestAdaptorActualTest : Test
     {
@@ -300,7 +304,7 @@ namespace to { namespace gtest {
             return 0;
         }
 
-        Test* getChildTestAt(int index) override { throw std::invalid_argument("No child tests available"); }
+        Test* getChildTestAt([[maybe_unused]] int index) override { throw std::invalid_argument("No child tests available"); }
         Test* findTest(const std::string& testName) override {
             return (testInfo->name() == testName) ? this : throw std::invalid_argument("Test not found: " + testName);
         }
@@ -310,9 +314,9 @@ namespace to { namespace gtest {
     
     inline std::vector<TestAdaptorActualTest> CreateTests(const testing::TestSuite* testSuite) {
         std::vector<TestAdaptorActualTest> tests;
-        const size_t test_count = testSuite->total_test_count();
-        tests.reserve(test_count);
-        for (size_t i = 0; i < test_count; ++i) {
+        const auto test_count = testSuite->total_test_count();
+        tests.reserve(ToSize_t(test_count));
+        for (int i = 0; i < test_count; ++i) {
             const testing::TestInfo* test_info = testSuite->GetTestInfo(i);
             tests.emplace_back(test_info);
         }
@@ -333,8 +337,8 @@ namespace to { namespace gtest {
             }
             return static_cast<int>(test_count);
         }
-        const Test* getChildTestAt(int index) const { return &tests.at(index); }
-        Test* getChildTestAt(int index) override    { return &tests.at(index); }
+        const Test* getChildTestAt(int index) const { return &tests.at(ToSize_t(index)); }
+        Test* getChildTestAt(int index) override    { return &tests.at(ToSize_t(index)); }
         std::string getName() const override { return testSuite->name(); }
         Test* findTest(const std::string& testName) override {
             for (auto& test : tests) {
@@ -349,9 +353,10 @@ namespace to { namespace gtest {
     inline std::vector<TestAdaptorSuite> CreateSuites() {
         std::vector<TestAdaptorSuite> suites;
         const testing::UnitTest* unit_test = testing::UnitTest::GetInstance();
-        const size_t test_suite_count = unit_test->total_test_suite_count();
-        suites.reserve(test_suite_count);
-        for (size_t i = 0; i < test_suite_count; ++i) {
+        // CppUnit uses int as size type so we shall too (bad)
+        const int test_suite_count = unit_test->total_test_suite_count();
+        suites.reserve(ToSize_t(test_suite_count));
+        for (int i = 0; i < test_suite_count; ++i) {
             const testing::TestSuite* test_suite = unit_test->GetTestSuite(i);
             suites.emplace_back(test_suite);
         }
@@ -370,7 +375,7 @@ namespace to { namespace gtest {
             return static_cast<int>(test_count);
         }
 
-        Test* getChildTestAt(int index) override { return &suites.at(index); }
+        Test* getChildTestAt(int index) override { return &suites.at(ToSize_t(index)); }
 
         std::string getName() const override { return "All Tests"; }
 
@@ -397,12 +402,11 @@ namespace to { namespace gtest {
 struct TestFactoryRegistry {
     TestFactoryRegistry() = default;
     
-    static TestFactoryRegistry& getRegistry (const std::string& [[maybe_unused]] name="All Tests") {
+    static TestFactoryRegistry& getRegistry ([[maybe_unused]] const std::string& name="All Tests") {
         // return singleton registry
         static TestFactoryRegistry registry{};
         return registry;
     }
-
 
     Test* makeTest() {
         static to::gtest::TestAdaptorRoot root;
@@ -452,12 +456,16 @@ struct TextTestRunner {
         filter = "--gtest_filter=" + filter;
     }
 
-    bool run(const std::string& testPath="", bool doWait=false, bool doPrintResult=true, bool doPrintProgress=true) {
+    bool run(
+            [[maybe_unused]] const std::string& testPath="",
+            [[maybe_unused]] bool doWait=false,
+            [[maybe_unused]] bool doPrintResult=true,
+            [[maybe_unused]] bool doPrintProgress=true
+        ) {
         int argc = filter.empty() ? 1 : 2;
         cleanFilter();
         std::string fake_exe_name = "executable_name";
         char* argv_data[] = { fake_exe_name.data(), filter.data() };
-        char** argv = argv_data; 
         testing::InitGoogleTest(&argc, argv_data);
         return 0 == RUN_ALL_TESTS();
     }
