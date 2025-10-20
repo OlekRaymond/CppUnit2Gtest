@@ -375,6 +375,9 @@ namespace to { namespace gtest {
         std::string getName() const override { return "All Tests"; }
 
         Test* findTest(const std::string& testName) override {
+            if (testName == "All Tests") {
+                return this;
+            }
             for (auto& suite : suites) {
                 if (suite.getName() == testName) {
                     return &suite;
@@ -414,27 +417,44 @@ struct TextTestRunner {
     //  CPPUNIT_NS::TextUi::TestRunner runner;
     std::string filter = "";
 
+    void addTest(const std::string& testName) {
+        if (testName.empty()) {
+            throw std::invalid_argument("Test name cannot be empty");
+        }
+        // if test (a suite/selection) is root, do nothing
+        if (testName == "All Tests") {  return; }
+        // check if it's already there
+        if (!filter.empty()) {
+            const auto position = filter.find(testName + ":");
+            const auto isNPos = std::string::npos == position;
+            if (position == 0) { return; }
+            if (!isNPos && filter.size() > position && filter[position-1]==':') { return; }
+        }
+        // else filter everything else out then add this one
+        filter += testName + ":";
+    }
+
     void addTest(Test* test) {
         if (test == nullptr) {
             throw std::invalid_argument("Test cannot be null");
         }
         const auto test_name = test->getName(); 
-        // if test (it's a suite/selection) is root, do nothing
-        if (test_name == "All Tests") {  return; }
-        // else filter everything else out then add this one
-        if (filter.empty()) {
-            filter = test_name;
-        } else {
-            filter += ":" + test_name;
-        }
+        addTest(test_name);
     }
     // Required by
     //  runner.addTest(registry.makeTest());
     //  runner.addTest(overallTest->findTest(unit));
 
+    // TODO: Should be protected then refactor tests
+    void cleanFilter() {
+        if (filter.empty()) { return; }
+        filter = filter.erase(filter.size() - 1, 1); // Remove trailing colon
+        filter = "--gtest_filter=" + filter;
+    }
+
     bool run(const std::string& testPath="", bool doWait=false, bool doPrintResult=true, bool doPrintProgress=true) {
         int argc = filter.empty() ? 1 : 2;
-        filter = "--gtest_filter=" + filter;
+        cleanFilter();
         std::string fake_exe_name = "executable_name";
         char* argv_data[] = { fake_exe_name.data(), filter.data() };
         char** argv = argv_data; 
@@ -458,9 +478,6 @@ namespace TextUi {
 
 } // namespace CppUnit
 
-// We are done with this to undef it
-//  (reduce intelli-sense and namespace pollution)
-#undef Cpp2Unit2Gtest_EnableMainHelperClasses
 #endif // Cpp2Unit2Gtest_EnableMainHelperClasses
 
 #endif // C++11 style header guard CPPUNIT_TO_GTEST_HEADER_
