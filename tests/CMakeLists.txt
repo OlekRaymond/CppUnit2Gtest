@@ -90,6 +90,10 @@ include(GetGtest.cmake)
 add_executable(${PROJECT_NAME} ${CppUnitFiles})
 target_link_libraries(${PROJECT_NAME} PRIVATE GTest::GTest GTest::Main)
 
+if (EnableMainHelperClasses)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC Cpp2Unit2Gtest_EnableMainHelperClasses)
+endif()
+
 if (BuildWithCoverage)
     if (MSVC)
         message(FATAL_ERROR "Cannot build with coverage on MSVC, please use GCC")
@@ -105,9 +109,6 @@ if (NOT build_testing)
     target_link_libraries(${PROJECT_NAME} PRIVATE CppUnit2Gtest::CppUnit2Gtest)
 else()
     message(STATUS "Building tests as internal tests (without find_package calls)")
-    if (EnableMainHelperClasses)
-        target_compile_definitions(${PROJECT_NAME} PUBLIC Cpp2Unit2Gtest_EnableMainHelperClasses)
-    endif()
 
     # Create links to our main file so they can be used by cppunit style imports
     include(CreateSymlink.cmake)

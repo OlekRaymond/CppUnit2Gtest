@@ -10,7 +10,7 @@ TEST(TextTestRunner, TextUiTestRunnerExists)
     ASSERT_NO_THROW( [[maybe_unused]] CppUnit::TextUi::TestRunner a = {} );
 }
 
-TEST(TextTestRunner, AddTest_NullTest_Throws)
+TEST(TextTestRunner, AddingNullptrThrows)
 {
     CppUnit::TextUi::TestRunner runner;
 
