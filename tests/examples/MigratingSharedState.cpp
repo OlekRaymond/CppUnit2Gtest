@@ -23,7 +23,7 @@ struct /*Imaginary*/ Database final {
 	auto& operator=(const Database&) = delete;
 	struct Transaction final {
 		Transaction() { /*Starts a transaction*/ }
-		void execute(std::string_view sql_statement) { /*Does Something*/ }
+		void execute([[maybe_unused]] std::string_view sql_statement) { /*Does Something*/ }
 		void commit() {}
 		~Transaction() { /*Aborts the transaction*/ }
 	};

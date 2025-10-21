@@ -7,6 +7,10 @@ project(
 )
 
 option(build_testing "Should we build our examples and tests" OFF)
+option(EnableMainHelperClasses 
+        "Aims to allow for drop in replacement. Users should prefer refactoring the main function"
+       OFF)
+option(InstallAsCppUnit "Install the package as 'cppunit' to allow drop-in replacement" OFF)
 
 if(build_testing)
     enable_testing()
@@ -16,6 +20,9 @@ endif()
 # Empty targets (for installing)
 add_library(CppUnit2Gtest INTERFACE)
 add_library(CppUnit2Gtest::CppUnit2Gtest ALIAS CppUnit2Gtest)
+if (EnableMainHelperClasses)
+    target_compile_definitions(CppUnit2Gtest INTERFACE Cpp2Unit2Gtest_EnableMainHelperClasses)
+endif()
 
 # Set include directories
 target_include_directories(CppUnit2Gtest INTERFACE
@@ -39,7 +46,6 @@ install(EXPORT CppUnit2GtestTargets
 
 include(CMakePackageConfigHelpers)
 
-# Create a config file that CMake looks for when we call find_package(core_project)
 configure_package_config_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Config.cmake.in
     "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"

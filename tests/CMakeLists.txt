@@ -9,7 +9,7 @@ cmake_minimum_required(VERSION 3.2...3.33)
 project(CppUnit2Gtest_AllTests)
 
 option(BuildExamples      "Builds all the examples in ./examples" ON)
-option(BuildInternalTests "Builds the internal tests" OFF)
+option(BuildInternalTests "Builds the internal tests" ON)
 option(BuildUnityTests 
     "Build lots of tests into one large file with expanded preprocessor, aimed for mutation tests which do not mutate macros"
     OFF
@@ -37,6 +37,7 @@ if (BuildInternalTests)
         "internal_tests/RegisteringTests.cpp"
         "internal_tests/TestTestData.cpp"
         "internal_tests/TestGettingData.cpp"
+        "internal_tests/TestMainClasses.cpp"
     )
 endif()
 if (BuildUnityTests)
@@ -88,6 +89,10 @@ endif()
 include(GetGtest.cmake)
 add_executable(${PROJECT_NAME} ${CppUnitFiles})
 target_link_libraries(${PROJECT_NAME} PRIVATE GTest::GTest GTest::Main)
+
+if (EnableMainHelperClasses)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC Cpp2Unit2Gtest_EnableMainHelperClasses)
+endif()
 
 if (BuildWithCoverage)
     if (MSVC)
