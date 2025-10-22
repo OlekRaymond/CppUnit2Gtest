@@ -30,7 +30,8 @@ target_include_directories(CppUnit2Gtest INTERFACE
     $<INSTALL_INTERFACE:include>
 )
 
-# install
+include(tests/GetGtest.cmake)
+target_link_libraries(CppUnit2Gtest INTERFACE GTest::GTest)
 
 # Install targets
 install(TARGETS CppUnit2Gtest
@@ -83,5 +84,16 @@ create_header_alias(\${SOURCE_FILE} \${INSTALL_INCLUDE_DIR}/cppunit/extensions/H
 create_header_alias(\${SOURCE_FILE} \${INSTALL_INCLUDE_DIR}/cppunit/config/SourcePrefix.h)
 create_header_alias(\${SOURCE_FILE} \${INSTALL_INCLUDE_DIR}/cppunit/TestAssert.h)
 ")
+if (EnableMainHelperClasses)
+install(CODE "
+set(INSTALL_INCLUDE_DIR \${CMAKE_INSTALL_PREFIX}/include)
+set(SOURCE_FILE CppUnit2Gtest.hpp)
+include(tests/CreateSymlink.cmake)
+create_header_alias(\${SOURCE_FILE} \${INSTALL_INCLUDE_DIR}/cppunit/TestPath.h)
+create_header_alias(\${SOURCE_FILE} \${INSTALL_INCLUDE_DIR}/cppunit/extensions/TestFactoryRegistry.h)
+create_header_alias(\${SOURCE_FILE} \${INSTALL_INCLUDE_DIR}/cppunit/ui/text/TestRunner.h)
+create_header_alias(\${SOURCE_FILE} \${INSTALL_INCLUDE_DIR}/cppunit/TestFixture.h)
+")
+endif()
 
 # We don't install GTest so the user can have any they would like and/or install it later
