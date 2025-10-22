@@ -3,6 +3,8 @@
 
 #include <gtest/gtest.h>
 
+#define CppUnit2Gtest
+
 #define CPPUNIT_NS ::CppUnit
 
 namespace CppUnit {
@@ -245,7 +247,7 @@ namespace to { namespace gtest {
 #define CPPUNIT_ASSERT_THROW_MESSAGE(message, expression, expected)  ASSERT_THROW(expression, expected) << message
 #define CPPUNIT_ASSERT_DOUBLES_EQUAL(a,b, t)                         ASSERT_NEAR(a, b, t)
 #define CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(msg, a, b, t)           ASSERT_NEAR(a, b, t) << msg
-#define CPPUNIT_FAIL(message)                                        FAIL(message)
+#define CPPUNIT_FAIL(message)                                        FAIL() << message
 #define CPPUNIT_ASSERT_ASSERTION_PASS(e)                             ASSERT_NO_THROW(e)
 #define CPPUNIT_ASSERT_ASSERTION_PASS_MESSAGE(msg, e)                ASSERT_NO_THROW(e) << msg
 #define CPPUNIT_ASSERT_LESS(expected, actual)                        ASSERT_LT(actual, expected)
@@ -485,7 +487,6 @@ namespace TextUi {
     // Does not have same interface as: https://cppunit.sourceforge.net/doc/cvs/class_test_runner.html
     // Has similar (enough) interface as: https://cppunit.sourceforge.net/doc/cvs/class_text_test_runner.html
 }
-
 
 } // namespace CppUnit
 

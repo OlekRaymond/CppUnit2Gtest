@@ -62,7 +62,8 @@ jobs:
         ${{ steps.strings.outputs.cmake_args }}
         -D BuildExamples=ON
         -D BuildInternalTests=ON
-        -DEnableMainHelperClasses=ON
+        -D EnableMainHelperClasses=ON
+        -D BuildExternalTests=ON
         -D CMAKE_PREFIX_PATH=${{ github.workspace }}/installed
         
     - &build-tests

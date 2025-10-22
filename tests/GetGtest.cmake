@@ -1,3 +1,7 @@
+if (TARGET GTest::GTest)
+    return()
+endif()
+
 # Try to find GTest first
 find_package(GTest QUIET)
 

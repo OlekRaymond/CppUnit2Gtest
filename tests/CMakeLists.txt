@@ -15,6 +15,7 @@ option(BuildUnityTests
     OFF
 )
 option(MutationTesting "Experimental, for mutation testing" OFF)
+option(BuildExternalTests "Build and add tests from external libs" OFF)
 
 if (NOT (BuildExamples OR BuildInternalTests OR BuildUnityTests))
     message(FATAL_ERROR "Asked to build tests but no tests were given")
@@ -126,6 +127,17 @@ else()
         "cppunit/config/SourcePrefix.h"
         "${SOURCE_FILE}"
     )
+endif()
+
+if (BuildExternalTests)
+    if(NOT EnableMainHelperClasses)
+        message(FATAL_ERROR "EnableMainHelperClasses must be set for external tests")
+    endif()
+    message(STATUS "Building external tests")
+    if (build_testing)
+        message(WARNING "Building external tests with internal package, not recommended")
+    endif()
+    add_subdirectory(external_tests)
 endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
