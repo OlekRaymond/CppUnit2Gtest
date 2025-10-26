@@ -28,6 +28,9 @@ add_library(CppUnit2Gtest::CppUnit2Gtest ALIAS CppUnit2Gtest)
 if (EnableMainHelperClasses)
     target_compile_definitions(CppUnit2Gtest INTERFACE Cpp2Unit2Gtest_EnableMainHelperClasses)
 endif()
+if (AllowAssertsInConstructors)
+    target_compile_definitions(CppUnit2Gtest INTERFACE CppUnit2Gtest_AllowAssertsInConstructors)
+endif()
 
 # Set include directories
 target_include_directories(CppUnit2Gtest INTERFACE

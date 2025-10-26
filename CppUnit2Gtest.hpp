@@ -39,7 +39,8 @@ namespace CppUnit {
 #endif
 
 namespace to { namespace gtest {
-
+    // Stream operators make things forward compatable with gtest
+    struct ExitingAssertion : std::stringstream { };
 #define CppUnit2Gtest_CHECK(condition) \
         if (!(condition)) { \
             throw std::runtime_error("Internal Check failed when running test harness " #condition ); \
@@ -90,7 +91,13 @@ namespace to { namespace gtest {
         void TestBody() override {
             // We inherit from this so safe to cast.
             auto& a = static_cast<TestSuite&>(*this);
-            (testMethod)(a);
+            try {
+                (testMethod)(a);
+            } catch (const ExitingAssertion& e) {
+                // Hack to get around non-exiting assertions
+                //  Mostly only needed when CppUnit2Gtest_AllowAssertsInConstructors is on
+                FAIL() << e.str();
+            }
         }
     };
 
@@ -225,41 +232,60 @@ namespace to { namespace gtest {
 #   define CU_TEST_SUITE_END()              CPPUNIT_TEST_SUITE_END()
 #   define CU_TEST_SUITE_REGISTRATION(tc)   CPPUNIT_TEST_SUITE_REGISTRATION(tc)
 #endif
+
+#if defined(CppUnit2Gtest_AllowAssertsInConstructors)
+
+/// Note: gtest args must be surrounded by brackets: 
+//   CppUnit2Gtest_assertion_wrapper_(TRUE, (true))
+//   CppUnit2Gtest_assertion_wrapper_(TRUE, (true) << "expected true")
+#   define CppUnit2Gtest_assertion_wrapper_(gtest_assertion, args) \
+    EXPECT_ ## gtest_assertion args ; if (::testing::Test::HasFailure()) throw ::CppUnit::to::gtest::ExitingAssertion{} 
+
+#   define CppUnit2Gtest_fail_wrapper_() ADD_FAILURE()
+
+#else // CppUnit2Gtest_AllowAssertsInConstructors
+#   define CppUnit2Gtest_assertion_wrapper_(gtest_assertion, args) \
+    ASSERT_ ## gtest_assertion args 
+
+#   define CppUnit2Gtest_fail_wrapper_() FAIL()
+
+#endif
+
 // For backwards compatibility, not recommended
 #if CPPUNIT_ENABLE_NAKED_ASSERT
 #   undef assert
-#   define assert(c)                        ASSERT_TRUE(c)
-#   define assertEqual(e,a)                 ASSERT_EQ(e,a)
-#   define assertDoublesEqual(e,a,d)        ASSERT_NEAR(e,a,d)
-#   define assertLongsEqual(e,a)            ASSERT_EQ(e,a)
+#   define assert(c)                        CppUnit2Gtest_assertion_wrapper_(TRUE, (c))
+#   define assertEqual(e,a)                 CppUnit2Gtest_assertion_wrapper_(EQ, (e,a))
+#   define assertDoublesEqual(e,a,d)        CppUnit2Gtest_assertion_wrapper_(NEAR, (e,a,d))
+#   define assertLongsEqual(e,a)            CppUnit2Gtest_assertion_wrapper_(EQ, (e,a))
 #endif
 
 #define CPPUNIT_TEST_FIXTURE(FixtureClass,testName) TEST_F(FixtureClass, testName)
 
 // Asserting
-#define CPPUNIT_ASSERT(condition)                                    ASSERT_TRUE(condition)
-#define CPPUNIT_ASSERT_MESSAGE(message, condition)                   ASSERT_TRUE(condition) << message
-#define CPPUNIT_ASSERT_EQUAL(a, b)                                   ASSERT_EQ(a, b)
-#define CPPUNIT_ASSERT_EQUAL_MESSAGE(msg, a, b)                      ASSERT_EQ(a, b) << msg
-#define CPPUNIT_ASSERT_NO_THROW(expression)                          ASSERT_NO_THROW(expression)
-#define CPPUNIT_ASSERT_NO_THROW_MESSAGE(msg, expression)             ASSERT_NO_THROW(expression) << message
-#define CPPUNIT_ASSERT_THROW(expression, expected)                   ASSERT_THROW(expression, expected)
-#define CPPUNIT_ASSERT_THROW_MESSAGE(message, expression, expected)  ASSERT_THROW(expression, expected) << message
-#define CPPUNIT_ASSERT_DOUBLES_EQUAL(a,b, t)                         ASSERT_NEAR(a, b, t)
-#define CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(msg, a, b, t)           ASSERT_NEAR(a, b, t) << msg
-#define CPPUNIT_FAIL(message)                                        FAIL() << message
-#define CPPUNIT_ASSERT_ASSERTION_PASS(e)                             ASSERT_NO_THROW(e)
-#define CPPUNIT_ASSERT_ASSERTION_PASS_MESSAGE(msg, e)                ASSERT_NO_THROW(e) << msg
-#define CPPUNIT_ASSERT_LESS(expected, actual)                        ASSERT_LT(actual, expected)
-#define CPPUNIT_ASSERT_LESSEQUAL(expected, actual)                   ASSERT_LE(actual, expected)
-#define CPPUNIT_ASSERT_GREATER(expected, actual)                     ASSERT_GT(actual, expected)
-#define CPPUNIT_ASSERT_GREATEREQUAL(expected, actual)                ASSERT_GE(actual, expected)
+#define CPPUNIT_ASSERT(condition)                                    CppUnit2Gtest_assertion_wrapper_(TRUE, (condition))
+#define CPPUNIT_ASSERT_MESSAGE(message, condition)                   CppUnit2Gtest_assertion_wrapper_(TRUE, (condition) << message)
+#define CPPUNIT_ASSERT_EQUAL(a, b)                                   CppUnit2Gtest_assertion_wrapper_(EQ, (a, b))
+#define CPPUNIT_ASSERT_EQUAL_MESSAGE(msg, a, b)                      CppUnit2Gtest_assertion_wrapper_(EQ, (a, b) << msg)
+#define CPPUNIT_ASSERT_NO_THROW(expression)                          CppUnit2Gtest_assertion_wrapper_(NO_THROW,(expression))
+#define CPPUNIT_ASSERT_NO_THROW_MESSAGE(msg, expression)             CppUnit2Gtest_assertion_wrapper_(NO_THROW,(expression) << message)
+#define CPPUNIT_ASSERT_THROW(expression, expected)                   CppUnit2Gtest_assertion_wrapper_(THROW, (expression, expected))
+#define CPPUNIT_ASSERT_THROW_MESSAGE(message, expression, expected)  CppUnit2Gtest_assertion_wrapper_(THROW,(expression, expected) << message)
+#define CPPUNIT_ASSERT_DOUBLES_EQUAL(a,b, t)                         CppUnit2Gtest_assertion_wrapper_(NEAR, (a, b, t))
+#define CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(msg, a, b, t)           CppUnit2Gtest_assertion_wrapper_(NEAR, (a, b, t) << msg)
+#define CPPUNIT_FAIL(message)                                        CppUnit2Gtest_fail_wrapper_() << message
+#define CPPUNIT_ASSERT_ASSERTION_PASS(e)                             CppUnit2Gtest_assertion_wrapper_(NO_THROW, (e))
+#define CPPUNIT_ASSERT_ASSERTION_PASS_MESSAGE(msg, e)                CppUnit2Gtest_assertion_wrapper_(NO_THROW, (e) << msg)
+#define CPPUNIT_ASSERT_LESS(expected, actual)                        CppUnit2Gtest_assertion_wrapper_(LT, (actual, expected))
+#define CPPUNIT_ASSERT_LESSEQUAL(expected, actual)                   CppUnit2Gtest_assertion_wrapper_(LE, (actual, expected))
+#define CPPUNIT_ASSERT_GREATER(expected, actual)                     CppUnit2Gtest_assertion_wrapper_(GT, (actual, expected))
+#define CPPUNIT_ASSERT_GREATEREQUAL(expected, actual)                CppUnit2Gtest_assertion_wrapper_(GE, (actual, expected))
 
 // These aren't in CppUnit but we can be nicer to the user
-#define CPPUNIT_ASSERT_LESS_MESSAGE(msg, expected, actual)           ASSERT_LT(actual, expected) << msg
-#define CPPUNIT_ASSERT_GREATER_MESSAGE(msg, expected, actual)        ASSERT_GT(actual, expected) << msg
-#define CPPUNIT_ASSERT_LESSEQUAL_MESSAGE(msg, expected, actual)      ASSERT_LE(actual, expected) << msg
-#define CPPUNIT_ASSERT_GREATEREQUAL_MESSAGE(msg, expected, actual)   ASSERT_GE(actual, expected) << msg
+#define CPPUNIT_ASSERT_LESS_MESSAGE(msg, expected, actual)           CppUnit2Gtest_assertion_wrapper_(LT, (actual, expected) << msg)
+#define CPPUNIT_ASSERT_GREATER_MESSAGE(msg, expected, actual)        CppUnit2Gtest_assertion_wrapper_(GT, (actual, expected) << msg)
+#define CPPUNIT_ASSERT_LESSEQUAL_MESSAGE(msg, expected, actual)      CppUnit2Gtest_assertion_wrapper_(LE, (actual, expected) << msg)
+#define CPPUNIT_ASSERT_GREATEREQUAL_MESSAGE(msg, expected, actual)   CppUnit2Gtest_assertion_wrapper_(GE, (actual, expected) << msg)
 
 #define CppUnit2Gtest_FailCompilation_NotSupported static_assert(false, \
     "This CppUnit macro is not supported. Please rewrite this test in GTest or with normal macros")
