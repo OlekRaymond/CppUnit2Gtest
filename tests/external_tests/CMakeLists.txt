@@ -13,9 +13,14 @@ if (NOT TARGET CppUnit2Gtest::CppUnit2Gtest)
     find_package(CppUnit2Gtest REQUIRED)
 endif()
 
-# Alias it to have CMake understand
 if (NOT TARGET cppunit)
-    add_library(cppunit ALIAS CppUnit2Gtest::CppUnit2Gtest)
+    set(cppunit_ROOT ${CppUnit2Gtest_ROOT})
+    set(CppUnit_ROOT ${CppUnit2Gtest_ROOT})
+    set(CPPUNIT_ROOT ${CppUnit2Gtest_ROOT})
+    # less likely to help
+    set(cppunit_DIR ${CppUnit2Gtest_DIR})
+    set(CppUnit_DIR ${CppUnit2Gtest_DIR})
+    set(CPPUNIT_DIR ${CppUnit2Gtest_DIR})
 endif()
 
 # Tests

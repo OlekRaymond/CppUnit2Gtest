@@ -17,12 +17,25 @@ option(BuildUnityTests
 option(MutationTesting "Experimental, for mutation testing" OFF)
 option(BuildExternalTests "Build and add tests from external libs" OFF)
 
-if (NOT (BuildExamples OR BuildInternalTests OR BuildUnityTests))
+if (NOT (BuildExamples OR BuildInternalTests OR BuildUnityTests OR BuildExternalTests))
     message(FATAL_ERROR "Asked to build tests but no tests were given")
 endif()
 
-set(CMAKE_CXX_STANDARD 17)
+
+if (BuildExternalTests)
+    if(NOT EnableMainHelperClasses)
+        message(FATAL_ERROR "EnableMainHelperClasses must be set for external tests")
+    endif()
+    message(STATUS "Building external tests")
+    if (build_testing)
+        message(WARNING "Building external tests with internal package, not recommended")
+    endif()
+    add_subdirectory(external_tests)
+endif()
+
+
 if (BuildExamples)
+    set(CMAKE_CXX_STANDARD 17)
     list(APPEND CppUnitFiles
         "examples/Money.cpp"
         "examples/Simple.cpp"
@@ -87,7 +100,13 @@ if (BuildUnityTests)
     )
 endif()
 
+# If no files are added (external tests only) skip!
+if (NOT CppUnitFiles)
+    return()
+endif()
+
 include(GetGtest.cmake)
+
 add_executable(${PROJECT_NAME} ${CppUnitFiles})
 target_link_libraries(${PROJECT_NAME} PRIVATE GTest::GTest GTest::Main)
 
@@ -127,17 +146,6 @@ else()
         "cppunit/config/SourcePrefix.h"
         "${SOURCE_FILE}"
     )
-endif()
-
-if (BuildExternalTests)
-    if(NOT EnableMainHelperClasses)
-        message(FATAL_ERROR "EnableMainHelperClasses must be set for external tests")
-    endif()
-    message(STATUS "Building external tests")
-    if (build_testing)
-        message(WARNING "Building external tests with internal package, not recommended")
-    endif()
-    add_subdirectory(external_tests)
 endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
