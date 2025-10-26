@@ -8,14 +8,14 @@ project(
 
 option(build_testing "Should we build our examples and tests" OFF)
 option(EnableMainHelperClasses 
-       "Aims to allow for drop in replacement. Users should prefer refactoring the main function"
-       OFF
-    )
-
+    "Aims to allow for drop in replacement. Users should prefer refactoring the main function"
+    OFF)
 option(InstallAsCppUnit 
-       "Install the package as 'cppunit' to allow drop-in replacement"
-       OFF
-    )
+    "Install the package as 'cppunit' to allow drop-in replacement"
+    OFF)
+option(AllowAssertsInConstructors
+    "Allows use of gtest exiting asserts (ASSERT_*) in constructors and destructors"
+    OFF)
 
 if(build_testing)
     enable_testing()
@@ -27,6 +27,9 @@ add_library(CppUnit2Gtest INTERFACE)
 add_library(CppUnit2Gtest::CppUnit2Gtest ALIAS CppUnit2Gtest)
 if (EnableMainHelperClasses)
     target_compile_definitions(CppUnit2Gtest INTERFACE Cpp2Unit2Gtest_EnableMainHelperClasses)
+endif()
+if (AllowAssertsInConstructors)
+    target_compile_definitions(CppUnit2Gtest INTERFACE CppUnit2Gtest_AllowAssertsInConstructors)
 endif()
 
 # Set include directories
