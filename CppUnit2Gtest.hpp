@@ -4,8 +4,11 @@
 #include <gtest/gtest.h>
 
 #define CppUnit2Gtest
-
-#define CPPUNIT_NS ::CppUnit
+#define CppUnit2Gtest_VERSION   "0.0.0"
+#define CPPUNIT_VERSION         "CppUnit2Gtest"
+#define CPPUNIT_NS              ::CppUnit
+#define CPPUNIT_NS_BEGIN        namespace CppUnit {
+#define CPPUNIT_NS_END          }
 
 namespace CppUnit {
 
@@ -287,21 +290,27 @@ namespace to { namespace gtest {
 #define CPPUNIT_ASSERT_LESSEQUAL_MESSAGE(msg, expected, actual)      CppUnit2Gtest_assertion_wrapper_(LE, (actual, expected) << msg)
 #define CPPUNIT_ASSERT_GREATEREQUAL_MESSAGE(msg, expected, actual)   CppUnit2Gtest_assertion_wrapper_(GE, (actual, expected) << msg)
 
-#define CppUnit2Gtest_FailCompilation_NotSupported static_assert(false, \
-    "This CppUnit macro is not supported. Please rewrite this test in GTest or with normal macros")
+#define CppUnit2Gtest_FailCompilation_NotSupported_ static_assert(false, \
+    "This CppUnit macro is not supported. Please rewrite this test in GTest or with implmented macros")
 
-// Things like assert failed are intentionally not added
-//  We can add them but behaviour could be buggy
-//   (I think an inline lambda counts as a function and therefor ASSERT won't end the function
-//   early so we'd call the lambda, return to outer function then `ASSERT_TRUE(HasFailure());`  (?)
-//  Alternatively we can add the gtest header for testing extenstions (see internal tests) and use that.
-//   Neither seem like a good idea
+// Some macros are intentionally not added
+//  Most are to allow users to define them themselves if they wish
+//      CPPUNIT_TEST_SUITE_PROPERTY
+//  Some however should really be re-written
 // These include:
-#define CPPUNIT_TEST_SUITE_ADD_TEST(test) CppUnit2Gtest_FailCompilation_NotSupported
+#define CPPUNIT_TEST_SUITE_ADD_TEST(t)              CppUnit2Gtest_FailCompilation_NotSupported_
+#define CPPUNIT_ASSERT_ASSERTION_FAIL(t)            CppUnit2Gtest_FailCompilation_NotSupported_
+#define CPPUNIT_EXTRACT_EXCEPTION_TYPE_(t)          CppUnit2Gtest_FailCompilation_NotSupported_
+#define CPPUNIT_ASSERT_ASSERTION_FAIL_MESSAGE(t)    CppUnit2Gtest_FailCompilation_NotSupported_
+#define CppUnit2Gtest_BadCast_ static_assert(false, "This did a C style cast and is unlikely to be what you wanted")
+#define CPPUNIT_STATIC_CAST(a, b)   CppUnit2Gtest_BadCast_
+#define CPPUNIT_CONST_CAST(a,b)     CppUnit2Gtest_BadCast_
 
-// Does nothing, these were for exporting plugins (not adding a main).
+// Macros that (now) do nothing have been implemented as such
+//  These were for exporting plugins (not adding a main).
 #define CPPUNIT_PLUGIN_IMPLEMENT_MAIN()
 #define CPPUNIT_PLUGIN_IMPLEMENT()
+#define CPPUNIT_WRAP_COLUMN 1
 
 #if defined(Cpp2Unit2Gtest_EnableMainHelperClasses)
 
