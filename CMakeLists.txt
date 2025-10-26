@@ -8,9 +8,14 @@ project(
 
 option(build_testing "Should we build our examples and tests" OFF)
 option(EnableMainHelperClasses 
-        "Aims to allow for drop in replacement. Users should prefer refactoring the main function"
-       OFF)
-option(InstallAsCppUnit "Install the package as 'cppunit' to allow drop-in replacement" OFF)
+       "Aims to allow for drop in replacement. Users should prefer refactoring the main function"
+       OFF
+    )
+
+option(InstallAsCppUnit 
+       "Install the package as 'cppunit' to allow drop-in replacement"
+       OFF
+    )
 
 if(build_testing)
     enable_testing()
@@ -66,6 +71,36 @@ install(
     DESTINATION "share/cmake/${PROJECT_NAME}"
 )
 
+if (InstallAsCppUnit) 
+    message(STATUS "CppUnit2Gtest will be installed as 'cppunit' to allow drop-in replacement")
+    add_library(cppunit ALIAS CppUnit2Gtest)
+    add_library(CppUnit ALIAS CppUnit2Gtest)
+    install(
+        FILES
+            "${CMAKE_CURRENT_BINARY_DIR}/CppUnitConfig.cmake"
+            "${CMAKE_CURRENT_BINARY_DIR}/CppUnitConfigVersion.cmake"
+        DESTINATION "share/cmake/CppUnit"
+    )
+    install(TARGETS CppUnit2Gtest
+        EXPORT CppUnitTargets
+        INCLUDES DESTINATION include
+    )
+    install(EXPORT CppUnitTargets
+        FILE CppUnitTargets.cmake
+        NAMESPACE CppUnit::
+        DESTINATION "share/cmake/CppUnit"
+    )
+    configure_package_config_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Config.cmake.in
+        "${CMAKE_CURRENT_BINARY_DIR}/CppUnitConfig.cmake"
+        INSTALL_DESTINATION "share/cmake/CppUnit"
+    )
+    write_basic_package_version_file(
+        CppUnitConfigVersion.cmake
+        VERSION ${PACKAGE_VERSION}
+        COMPATIBILITY AnyNewerVersion
+    )
+endif() 
 # install the header as expected
 install(
     FILES "${CMAKE_CURRENT_SOURCE_DIR}/CppUnit2Gtest.hpp"
@@ -85,7 +120,7 @@ create_header_alias(\${SOURCE_FILE} \${INSTALL_INCLUDE_DIR}/cppunit/config/Sourc
 create_header_alias(\${SOURCE_FILE} \${INSTALL_INCLUDE_DIR}/cppunit/TestAssert.h)
 ")
 if (EnableMainHelperClasses)
-install(CODE "
+    install(CODE "
 set(INSTALL_INCLUDE_DIR \${CMAKE_INSTALL_PREFIX}/include)
 set(SOURCE_FILE CppUnit2Gtest.hpp)
 include(tests/CreateSymlink.cmake)
