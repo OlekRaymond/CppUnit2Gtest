@@ -8,14 +8,14 @@ project(
 
 option(build_testing "Should we build our examples and tests" OFF)
 option(EnableMainHelperClasses 
-       "Aims to allow for drop in replacement. Users should prefer refactoring the main function"
-       OFF
-    )
-
+    "Aims to allow for drop in replacement. Users should prefer refactoring the main function"
+    OFF)
 option(InstallAsCppUnit 
-       "Install the package as 'cppunit' to allow drop-in replacement"
-       OFF
-    )
+    "Install the package as 'cppunit' to allow drop-in replacement"
+    OFF)
+option(AllowAssertsInConstructors
+    "Allows use of gtest exiting asserts (ASSERT_*) in constructors and destructors"
+    OFF)
 
 if(build_testing)
     enable_testing()
